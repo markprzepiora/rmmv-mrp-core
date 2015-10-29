@@ -10,9 +10,9 @@ var browserSync = require('browser-sync');
 var reload = browserSync.reload;
 
 var config = {
-  entryFile: './src/app.js',
+  entryFile: './src/mrp-core.js',
   outputDir: './dist/',
-  outputFile: 'app.js'
+  outputFile: 'mrp-core.js'
 };
 
 // clean the output directory
