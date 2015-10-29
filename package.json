@@ -1,26 +1,25 @@
 {
-  "name": "es6-6to5-browserify-boilerplate",
+  "name": "rpgmmv-mrp-core",
   "version": "0.0.0",
-  "description": "A repo to play with ES6++",
-  "homepage": "https://github.com/thoughtram/es6-6to5-browserify-boilerplate",
+  "description": "RPG Maker MV Core Extensions",
+  "homepage": "",
   "repository": {
     "type": "git",
-    "url": "git://github.com/thoughtram/es6-6to5-browserify-boilerplate.git"
-  },
-  "bugs": {
-    "url": "https://github.com/thoughtram/es6-6to5-browserify-boilerplate/issues"
+    "url": "git://github.com/markprzepiora/rpgmmv-mrp-core"
   },
   "devDependencies": {
-    "babelify": "~5.0.3",
+    "babelify": "~6.4.0",
     "browser-sync": "^1.7.1",
     "browserify": "^6.3.3",
+    "event-emitter": "^0.3.4",
     "gulp": "~3.8.10",
     "gulp-rename": "^1.2.0",
     "lodash": "^2.4.1",
+    "ramda": "^0.18.0",
     "rimraf": "~2.2.8",
-    "watchify": "^2.1.1",
-    "vinyl-source-stream": "^1.0.0"
+    "vinyl-source-stream": "^1.0.0",
+    "watchify": "^2.1.1"
   },
-  "author": "Christoph Burgdorf <christoph@thoughtram.io>",
+  "author": "Mark Przepiora <mark.przepiora@gmail.com>",
   "license": "MIT"
 }
