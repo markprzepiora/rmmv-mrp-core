@@ -1,7 +1,9 @@
 function regexMatcher(type, regex) {
+  var massagedRegex = new RegExp(/^/.source + regex.source);
+
   return function(previousTokens, str) {
     var match;
-    if (match = str.match(regex)) {
+    if (match = str.match(massagedRegex)) {
       return [
         [{ type: type, token: match[0] }],
         str.slice(match[0].length)
@@ -13,7 +15,7 @@ function regexMatcher(type, regex) {
 }
 
 // Like the regex matcher, but throws away the matched token.
-function nullMatcher(baseMatcher) {
+function skip(baseMatcher) {
   return function(previousTokens, str) {
     var match;
     if (match = baseMatcher(previousTokens, str)) {
@@ -25,16 +27,29 @@ function nullMatcher(baseMatcher) {
   }
 }
 
-function combineMatchers(firstMatcher, secondMatcher) {
+function optional(matcher) {
   return function(previousTokens, str) {
-    const firstMatch = firstMatcher(previousTokens, str);
+    var match;
+    if (match = matcher(previousTokens, str)) {
+      const [tokens, nextStr] = match;
+      return [[], nextStr];
+    } else {
+      return [[], str];
+    }
+  }
+}
+
+function seq2(first, second) {
+  return function(previousTokens, str) {
+    const firstMatch = first(previousTokens, str);
 
     if (!firstMatch) {
       return null;
     }
 
     const [firstTokens, nextStr] = firstMatch;
-    const secondMatch = secondMatcher([...previousTokens, ...firstTokens], nextStr);
+    const secondMatch =
+      second([...previousTokens, ...firstTokens], nextStr);
 
     if (!secondMatch) {
       return null;
@@ -49,37 +64,90 @@ function combineMatchers(firstMatcher, secondMatcher) {
   }
 }
 
-const matchers = [
-  nullMatcher(regexMatcher('WHITESPACE', /^\s+/)),
-  combineMatchers(
-    regexMatcher('KEY', /^[a-zA-Z_][a-zA-Z0-9_-]*/),
-    regexMatcher('KEYVALSEP', /^:/)
-  ),
-  // combineMatchers(
-  //   regexMatcher('BRA', /^</),
-  //   regexMatcher('IDENTIFIER', /^[a-zA-Z_][a-zA-Z0-9-_]*/)
-  // ),
-  regexMatcher('BRA', /^</),
-  regexMatcher('KET', /^>/),
-  regexMatcher('COMMA', /^,/),
-  regexMatcher('COLON', /^:/),
-  regexMatcher('NUMBER', /^-?[0-9]+(\.[0-9]+)?/),
-  regexMatcher('BOOLEAN', /^(true|false)/i),
-  function(previousTokens, str) {
-    var match;
-    if (match = str.match(/^"([^"]|\\")*"/)) {
-      return [
-        [{ type: 'BARESTRING', token: JSON.parse(match[0]) }],
-        str.slice(match[0].length)
-      ];
+function seq(firstMatcher, secondMatcher, thirdMatcher, ...rest) {
+  const _seq2 = seq2(firstMatcher, secondMatcher);
+
+  if (thirdMatcher) {
+    console.log(1);
+    return seq(_seq2, thirdMatcher, ...rest);
+  } else {
+    console.log(2);
+    return _seq2;
+  }
+}
+
+function precededByToken(type) {
+  return function(previousTokens, str) {
+    const lastToken = previousTokens[previousTokens.length - 1];
+    if (lastToken && lastToken.type == type) {
+      return [[], str];
     } else {
       return null;
     }
-  },
-  regexMatcher('BARESTRING', /^[^,:><"]+/)
-]
+  }
+}
 
-function firstMatch(matchers, previousTokens, str) {
+function map(fn, matcher) {
+  return function(previousTokens, str) {
+    var match;
+    if (match = matcher(previousTokens, str)) {
+      const [newTokens, newStr] = match;
+      const mappedTokens = newTokens.map(
+        ({ type, token }) => ({ type: type, token: fn(token) }));
+
+      return [mappedTokens, newStr];
+    } else {
+      return null;
+    }
+  }
+}
+
+const BRA          = regexMatcher('BRA', /</);
+const KET          = regexMatcher('KET', />/);
+const WHITESPACE   = skip(regexMatcher('WHITESPACE', /^\s+/));
+const IDENTIFIER   = regexMatcher('IDENTIFIER', /[a-zA-Z_][a-zA-Z0-9-_]*/);
+const KEY          = regexMatcher('KEY', /[a-zA-Z_][a-zA-Z0-9-_]*/);
+const KEYVALSEP    = regexMatcher('KEYVALSEP', /:/);
+const BARESTRING   = regexMatcher('BARESTRING', /[^,:><"]+/);
+const COMMA        = regexMatcher('COMMA', /,/);
+const NUMBER       = regexMatcher('NUMBER', /-?[0-9]+(\.[0-9]+)?/);
+const BOOLEAN      = regexMatcher('BOOLEAN', /(true|false)/i);
+const QUOTEDSTRING = map(JSON.parse, regexMatcher('BARESTRING', /"([^"]|\\")*"/));
+
+const matchers = [
+  WHITESPACE,
+
+  // <key: "val">
+  // ^
+  BRA,
+
+  // <key: "val">
+  //            ^
+  KET,
+
+  // <one: 1, two: 2>
+  //        ^
+  COMMA,
+
+  // <key: "val">
+  //  ^^^^
+  seq(KEY, optional(WHITESPACE), KEYVALSEP),
+
+  // <Identifier key: "val">
+  //  ^^^^^^^^^^
+  seq(
+    precededByToken('BRA'), optional(WHITESPACE), IDENTIFIER
+  ),
+
+  KEYVALSEP,
+  NUMBER,
+  BOOLEAN,
+
+  QUOTEDSTRING,
+  BARESTRING
+];
+
+function or(matchers, previousTokens, str) {
   var match;
   for (var i = 0; i < matchers.length; i++) {
     if (match = matchers[i](previousTokens, str)) {
@@ -93,19 +161,17 @@ function firstMatch(matchers, previousTokens, str) {
 function lex(str) {
   var tokens = [];
   var newTokens, newStr;
+  var counter = 0;
 
   while (str.length > 0) {
-    [newTokens, newStr] = firstMatch(matchers, tokens, str) || [
+    [newTokens, str] = or(matchers, tokens, str) || [
       [{ type: 'UNKNOWN', token: str }], ""
     ];
     tokens = [...tokens, ...newTokens];
 
-    // Make sure we don't get stuck in an infinite loop.
-    if (newStr === str) {
-      return tokens;
+    if (counter++ > 10000) {
+      throw "tried to lex more than 10,000 tokens - this is probably a bug.";
     }
-
-    str = newStr;
   }
 
   return tokens;
@@ -221,8 +287,43 @@ function parseAnonymousObject(tokens, pos) {
   return [object, ketPos + 1];
 }
 
+function parseNamedObject(tokens, pos) {
+  var x = 0;
+
+  if (pos + 2 >= tokens.length) {
+    return null;
+  }
+
+  const firstToken = tokens[pos];
+  const secondToken = tokens[pos + 1];
+
+  if (firstToken.type != 'BRA' || secondToken.type != 'IDENTIFIER') {
+    return null;
+  }
+
+  const argsMatch = parseArgs(tokens, pos + 2);
+
+  if (!argsMatch) {
+    return null;
+  }
+
+  const [object, ketPos] = argsMatch;
+
+  if (ketPos >= tokens.length) {
+    return null;
+  }
+
+  if (tokens[ketPos].type != 'KET') {
+    return null;
+  }
+
+  return [{ ...object, type: secondToken.token }, ketPos + 1];
+}
+
 function parse(str) {
-  var parsed = parseAnonymousObject(lex(str), 0);
+  var parsed =
+    parseAnonymousObject(lex(str), 0) ||
+    parseNamedObject(lex(str), 0);
   if (parsed) {
     return parsed[0];
   } else {
@@ -230,4 +331,7 @@ function parse(str) {
   }
 }
 
-export default parse;
+export default {
+  parse: parse,
+  lex: lex
+};
