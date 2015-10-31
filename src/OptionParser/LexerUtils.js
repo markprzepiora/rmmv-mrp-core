@@ -16,7 +16,7 @@ function LexerResponse(tokens, newCharacterStream) {
 //
 // rest() returns the slice from position pos
 // get() returns the item at pos
-// from(i) returns a new character stream starting at pos + i
+// advance(i) returns a new character stream starting at pos + i
 //
 // The calling code can pretend they're just dealing with the slice, but we
 // keep track of where we are in the underlying string.
@@ -24,9 +24,16 @@ function LexerResponse(tokens, newCharacterStream) {
 function CharacterStream(fullString, pos = 0) {
   return {
     ...Stream(fullString, pos),
-    from: (index) => CharacterStream(fullString, pos + index),
+    advance: (index = 1) => CharacterStream(fullString, pos + index),
     flush: () => CharacterStream(fullString, fullString.length),
     Token: (type, token) => Token(type, token, pos),
+  }
+}
+
+export function TokenStream(buffer, pos = 0) {
+  return {
+    ...Stream(buffer, pos),
+    advance: (index = 1) => TokenStream(buffer, pos + index)
   }
 }
 
@@ -38,13 +45,11 @@ function Stream(buffer, pos = 0) {
     present: pos < buffer.length,
     empty: pos >= buffer.length,
     rest: () => buffer.slice(pos),
-    from: (index) => Stream(buffer, pos + index),
-    flush: () => Stream(buffer, buffer.length),
-    take: (n) => buffer.slice(pos, pos + index)
+    get: () => buffer[pos],
+    advance: (index = 1) => Stream(buffer, pos + index),
+    take: (n) => buffer.slice(pos, pos + n)
   }
 }
-
-export var TokenStream = Stream;
 
 export function regex(type, regex, flags = '') {
   var massagedRegex = new RegExp(/^/.source + regex.source, flags);
@@ -54,7 +59,7 @@ export function regex(type, regex, flags = '') {
     if (match = charStream.rest().match(massagedRegex)) {
       return LexerResponse(
         [charStream.Token(type, match[0])],
-        charStream.from(match[0].length)
+        charStream.advance(match[0].length)
       );
     } else {
       return null;
@@ -169,7 +174,7 @@ export function Lexer(_lexer, str) {
         _lexer(tokens, charStream) ||
         LexerResponse(
           [charStream.Token('UNKNOWN', charStream.rest())],
-          charStream.rest().length
+          charStream.flush()
         );
 
       tokens = [...tokens, ...match.tokens];

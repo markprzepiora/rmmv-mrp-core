@@ -1,5 +1,5 @@
 import {
-  regex, skip, optional, map, precededByToken, seq, or, Lexer
+  regex, skip, optional, map, precededByToken, seq, or, Lexer, TokenStream
 } from './LexerUtils';
 
 const BRA          = regex('BRA', /</);
@@ -57,12 +57,12 @@ ARG = KEY : VAL | VAL
 
 */
 
-function parseArgs(tokens, pos) {
+function parseArgs(tokenStream) {
   var options = { args: [] };
-  var result, nextArg, nextPos;
+  var result, nextArg, nextStream;
 
-  while (result = parseArg(tokens, pos)) {
-    [nextArg, nextPos] = result;
+  while (result = parseArg(tokenStream)) {
+    [nextArg, nextStream] = result;
 
     if (typeof nextArg === 'object') {
       options = { ...options, ...nextArg };
@@ -70,123 +70,118 @@ function parseArgs(tokens, pos) {
       options = { ...options, args: options.args.concat(nextArg) };
     }
 
-    if (nextPos >= tokens.length || tokens[nextPos].type != 'COMMA') {
-      return [options, nextPos];
+    if (nextStream.empty || nextStream.get().type != 'COMMA') {
+      return [options, nextStream];
     }
 
-    pos = nextPos + 1;
+    tokenStream = nextStream.advance();
   }
 
-  return [options, pos];
+  return [options, tokenStream];
 }
 
-function parseArg(tokens, pos) {
-  return parseKeyVal(tokens, pos) || parseVal(tokens, pos);
+function parseArg(tokenStream) {
+  return parseKeyVal(tokenStream) || parseVal(tokenStream);
 }
 
-function parseVal(tokens, pos) {
-  if (pos >= tokens.length) {
+function parseVal(tokenStream) {
+  if (tokenStream.empty) {
     return null;
   }
 
-  var token = tokens[pos];
+  var token = tokenStream.get();
 
   switch(token.type) {
-    case 'NUMBER':     return [Number(token.token), pos + 1];
+    case 'NUMBER':     return [Number(token.token), tokenStream.advance()];
     case 'BARESTRING':
-    case 'KEY':        return [token.token,         pos + 1];
-    case 'BOOLEAN':    return [token.token.toLowerCase() === 'true' ? true : false, pos + 1];
+    case 'KEY':        return [token.token, tokenStream.advance()];
+    case 'BOOLEAN':    return [token.token.toLowerCase() === 'true' ? true : false, tokenStream.advance()];
     default:           return null;
   }
 }
 
-function parseKeyVal(tokens, pos) {
-  if (pos + 2 >= tokens.length) {
+function parseKeyVal(tokenStream) {
+  if (tokenStream.length < 3) {
     return null;
   }
 
-  const [t1, t2, t3] = tokens.slice(pos, pos + 3);
+  const [t1, t2, t3] = tokenStream.take(3);
 
   if (t1.type != 'KEY' || t2.type != 'KEYVALSEP') {
     return null;
   }
 
-  const val = parseVal(tokens, pos + 2);
+  const val = parseVal(tokenStream.advance(2));
 
   if (!val) {
     return null;
   }
 
-  return [{ [t1.token]: val[0] }, pos + 3];
+  return [{ [t1.token]: val[0] }, tokenStream.advance(3)];
 }
 
-function parseAnonymousObject(tokens, pos) {
-  var x = 0;
-
-  if (pos + 2 >= tokens.length) {
+function parseAnonymousObject(tokenStream) {
+  if (tokenStream.length < 3) {
     return null;
   }
 
-  const firstToken = tokens[pos];
-
-  if (firstToken.type != 'BRA') {
+  if (tokenStream.get().type != 'BRA') {
     return null;
   }
 
-  const argsMatch = parseArgs(tokens, pos + 1);
+  const argsMatch = parseArgs(tokenStream.advance());
 
   if (!argsMatch) {
     return null;
   }
 
-  const [object, ketPos] = argsMatch;
+  const [object, ketStream] = argsMatch;
 
-  if (ketPos >= tokens.length) {
+  if (ketStream.empty) {
     return null;
   }
 
-  if (tokens[ketPos].type != 'KET') {
+  if (ketStream.get().type != 'KET') {
     return null;
   }
 
-  return [object, ketPos + 1];
+  return [object, ketStream.advance()];
 }
 
-function parseNamedObject(tokens, pos) {
-  var x = 0;
-
-  if (pos + 2 >= tokens.length) {
+function parseNamedObject(tokenStream) {
+  if (tokenStream.length < 3) {
     return null;
   }
 
-  const firstToken = tokens[pos];
-  const secondToken = tokens[pos + 1];
+  const firstToken = tokenStream.get();
+  const secondToken = tokenStream.advance().get();
 
   if (firstToken.type != 'BRA' || secondToken.type != 'IDENTIFIER') {
     return null;
   }
 
-  const argsMatch = parseArgs(tokens, pos + 2);
+  const argsMatch = parseArgs(tokenStream.advance(2));
 
   if (!argsMatch) {
     return null;
   }
 
-  const [object, ketPos] = argsMatch;
+  const [object, ketStream] = argsMatch;
 
-  if (ketPos >= tokens.length) {
+  if (ketStream.empty) {
     return null;
   }
 
-  if (tokens[ketPos].type != 'KET') {
+  if (ketStream.get().type != 'KET') {
     return null;
   }
 
-  return [{ ...object, type: secondToken.token }, ketPos + 1];
+  return [{ ...object, type: secondToken.token }, ketStream.advance()];
 }
 
 function parseTokens(tokens) {
-  var parsed = parseAnonymousObject(tokens, 0) || parseNamedObject(tokens, 0);
+  var tokenStream = TokenStream(tokens);
+  var parsed = parseAnonymousObject(tokenStream, 0) || parseNamedObject(tokenStream, 0);
   if (parsed) {
     return parsed[0];
   } else {
