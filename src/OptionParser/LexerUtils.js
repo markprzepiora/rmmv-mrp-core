@@ -14,29 +14,44 @@ function LexerResponse(tokens, newCharacterStream) {
 // fullString: the underlying buffer
 // pos: the 'zero' index of the stream
 //
-// str() returns the slice from position pos
+// rest() returns the slice from position pos
+// get() returns the item at pos
 // from(i) returns a new character stream starting at pos + i
 //
 // The calling code can pretend they're just dealing with the slice, but we
 // keep track of where we are in the underlying string.
+
 function CharacterStream(fullString, pos = 0) {
   return {
-    fullString,
-    pos,
-    empty: pos >= fullString.length,
-    str: () => fullString.slice(pos),
+    ...Stream(fullString, pos),
     from: (index) => CharacterStream(fullString, pos + index),
+    flush: () => CharacterStream(fullString, fullString.length),
     Token: (type, token) => Token(type, token, pos),
-    flush: () => CharacterStream(fullString, fullString.length)
   }
 }
+
+function Stream(buffer, pos = 0) {
+  return {
+    buffer,
+    pos,
+    length: buffer.length - pos,
+    present: pos < buffer.length,
+    empty: pos >= buffer.length,
+    rest: () => buffer.slice(pos),
+    from: (index) => Stream(buffer, pos + index),
+    flush: () => Stream(buffer, buffer.length),
+    take: (n) => buffer.slice(pos, pos + index)
+  }
+}
+
+export var TokenStream = Stream;
 
 export function regex(type, regex, flags = '') {
   var massagedRegex = new RegExp(/^/.source + regex.source, flags);
 
   return function(previousTokens, charStream) {
     var match;
-    if (match = charStream.str().match(massagedRegex)) {
+    if (match = charStream.rest().match(massagedRegex)) {
       return LexerResponse(
         [charStream.Token(type, match[0])],
         charStream.from(match[0].length)
@@ -153,8 +168,8 @@ export function Lexer(_lexer, str) {
       var match =
         _lexer(tokens, charStream) ||
         LexerResponse(
-          [charStream.Token('UNKNOWN', charStream.str())],
-          charStream.str().length
+          [charStream.Token('UNKNOWN', charStream.rest())],
+          charStream.rest().length
         );
 
       tokens = [...tokens, ...match.tokens];
@@ -168,35 +183,4 @@ export function Lexer(_lexer, str) {
 
     return tokens;
   }
-}
-
-function TokenStream(tokens, pos = 0) {
-  const present = pos < tokens.length;
-
-  function next() {
-    return TokenStream(tokens, pos + 1);
-  }
-
-  function type() {
-    if (!present) {
-      throw `no token at position ${pos}`;
-    }
-
-    return tokens[pos].type;
-  }
-
-  function token() {
-    if (!present) {
-      throw `no token at position ${pos}`;
-    }
-
-    return tokens[pos].token;
-  }
-
-  return {
-    present,
-    next,
-    type,
-    token
-  };
 }
