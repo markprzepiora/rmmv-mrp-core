@@ -193,20 +193,20 @@ parse_VAL =
 */
 
 function parseArgs(tokens, pos) {
-  var args = { positional: [] };
+  var options = { args: [] };
   var result, nextArg, nextPos;
 
   while (result = parseArg(tokens, pos)) {
     [nextArg, nextPos] = result;
 
     if (typeof nextArg === 'object') {
-      args = { ...args, ...nextArg };
+      options = { ...options, ...nextArg };
     } else {
-      args = { ...args, positional: args.positional.concat(nextArg) };
+      options = { ...options, args: options.args.concat(nextArg) };
     }
 
     if (nextPos >= tokens.length || tokens[nextPos].type != 'COMMA') {
-      return [args, nextPos];
+      return [options, nextPos];
     }
 
     pos = nextPos + 1;
