@@ -55,11 +55,6 @@ OPTS = < ARGS > | < IDENT : ARGS >
 ARGS = ARG | ARGS , ARG
 ARG = KEY : VAL | VAL
 
-parse_ARG =
-  parse_KEY:VAL or parse_VAL
-
-parse_VAL =
-
 */
 
 function parseArgs(tokens, pos) {
