@@ -1,66 +1,85 @@
-var gulp = require('gulp');
-var fs = require('fs');
-var browserify = require('browserify');
-var watchify = require('watchify');
-var babelify = require('babelify');
-var rimraf = require('rimraf');
-var source = require('vinyl-source-stream');
-var _ = require('lodash');
+var gulp        = require('gulp');
+var browserify  = require('browserify');
+var watchify    = require('watchify');
+var source      = require('vinyl-source-stream');
+var colors      = require('colors');
+var babelify    = require('babelify');
+var _           = require('lodash');
 var browserSync = require('browser-sync');
-var reload = browserSync.reload;
 
-var config = {
-  entryFile: './src/mrp-core.js',
-  outputDir: './dist/',
-  outputFile: 'mrp-core.js'
-};
-
-// clean the output directory
-gulp.task('clean', function(cb){
-    rimraf(config.outputDir, cb);
-});
-
-var bundler;
-function getBundler() {
-  if (!bundler) {
-    bundler = watchify(browserify(config.entryFile, _.extend({ debug: true }, watchify.args)));
+var files = [
+  {
+    input: ['./src/mrp-core.js'],
+    output: 'mrp-core.js',
+    extensions: ['.js'],
+    destination: './dist'
+  }, {
+    input: ['./test/index.js'],
+    output: 'test.js',
+    extensions: ['.js'],
+    destination: './dist'
   }
-  return bundler;
+];
+
+var createBundle = function(options, callback) {
+  var bundleMethod = global.isWatching ? watchify : browserify;
+  var opts = {
+    entries: options.input,
+    extensions: options.extensions,
+    packageCache: {},
+    cache: {}
+  };
+
+  if (global.isWatching) {
+    var bundler = watchify(browserify(_.extend(opts, {})));
+  } else {
+    var bundler = browserify(opts);
+  }
+  bundler = bundler.transform(babelify);
+
+  var rebundle = function() {
+    var startTime = new Date().getTime();
+
+    return bundler
+      .bundle()
+      .on('error', function() {
+        return console.log(arguments);
+      })
+      .pipe(source(options.output))
+      .pipe(gulp.dest(options.destination))
+      .pipe(browserSync.reload({ stream: true }))
+      .on('end', function() {
+        var time = (new Date().getTime() - startTime) / 1000;
+        return console.log(options.output.cyan + " was browserified: " + (time + 's').magenta);
+      })
+  };
+  if (global.isWatching) {
+    bundler.on('update', rebundle);
+  }
+  return rebundle();
 };
 
-function bundle() {
-  return getBundler()
-    .transform(babelify)
-    .bundle()
-    .on('error', function(err) { console.log('Error: ' + err.message); })
-    .pipe(source(config.outputFile))
-    .pipe(gulp.dest(config.outputDir))
-    .pipe(reload({ stream: true }));
-}
-
-gulp.task('build-persistent', ['clean'], function() {
-  return bundle();
-});
-
-gulp.task('build', ['build-persistent'], function() {
-  process.exit(0);
-});
-
-gulp.task('watch', ['build-persistent'], function() {
-
-  browserSync({
-    server: {
-      baseDir: './'
-    }
+var createBundles = function(bundles) {
+  return bundles.forEach(function(bundle) {
+    return createBundle({
+      input:       bundle.input,
+      output:      bundle.output,
+      extensions:  bundle.extensions,
+      destination: bundle.destination,
+      debug:       true
+    });
   });
+};
 
-  getBundler().on('update', function() {
-    gulp.start('build-persistent')
-  });
+gulp.task('browserify', function() {
+  return createBundles(files);
 });
 
-// WEB SERVER
-gulp.task('serve', function () {
+gulp.task('setWatch', function() {
+  global.isWatching = true;
+});
+
+gulp.task('watch', ['setWatch', 'browserify'], function() {
   browserSync({
     server: {
       baseDir: './'
