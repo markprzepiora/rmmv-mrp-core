@@ -1,5 +1,5 @@
-function regexMatcher(type, regex) {
-  var massagedRegex = new RegExp(/^/.source + regex.source);
+function regexMatcher(type, regex, flags = '') {
+  var massagedRegex = new RegExp(/^/.source + regex.source, flags);
 
   return function(previousTokens, str) {
     var match;
@@ -68,10 +68,8 @@ function seq(firstMatcher, secondMatcher, thirdMatcher, ...rest) {
   const _seq2 = seq2(firstMatcher, secondMatcher);
 
   if (thirdMatcher) {
-    console.log(1);
     return seq(_seq2, thirdMatcher, ...rest);
   } else {
-    console.log(2);
     return _seq2;
   }
 }
@@ -111,7 +109,7 @@ const KEYVALSEP    = regexMatcher('KEYVALSEP', /:/);
 const BARESTRING   = regexMatcher('BARESTRING', /[^,:><"]+/);
 const COMMA        = regexMatcher('COMMA', /,/);
 const NUMBER       = regexMatcher('NUMBER', /-?[0-9]+(\.[0-9]+)?/);
-const BOOLEAN      = regexMatcher('BOOLEAN', /(true|false)/i);
+const BOOLEAN      = regexMatcher('BOOLEAN', /(true|false)/, 'i');
 const QUOTEDSTRING = map(JSON.parse, regexMatcher('BARESTRING', /"([^"]|\\")*"/));
 
 const matchers = [
@@ -212,7 +210,7 @@ function parseArgs(tokens, pos) {
     pos = nextPos + 1;
   }
 
-  return null;
+  return [options, pos];
 }
 
 function parseArg(tokens, pos) {

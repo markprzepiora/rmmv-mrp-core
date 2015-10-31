@@ -50,7 +50,8 @@ var createBundle = function(options, callback) {
       .pipe(browserSync.reload({ stream: true }))
       .on('end', function() {
         var time = (new Date().getTime() - startTime) / 1000;
-        return console.log(options.output.cyan + " was browserified: " + (time + 's').magenta);
+        return console.log(
+          options.output.cyan + " was browserified: " + (time + 's').magenta);
       })
   };
   if (global.isWatching) {
