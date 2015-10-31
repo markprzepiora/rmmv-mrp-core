@@ -190,15 +190,17 @@ function parseNamedObject(tokens, pos) {
   return [{ ...object, type: secondToken.token }, ketPos + 1];
 }
 
-function parse(str) {
-  var parsed =
-    parseAnonymousObject(lex(str), 0) ||
-    parseNamedObject(lex(str), 0);
+function parseTokens(tokens) {
+  var parsed = parseAnonymousObject(tokens, 0) || parseNamedObject(tokens, 0);
   if (parsed) {
     return parsed[0];
   } else {
     return null;
   }
+}
+
+function parse(str) {
+  return parseTokens(lex(str));
 }
 
 export default {

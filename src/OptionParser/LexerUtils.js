@@ -133,3 +133,34 @@ export function Lexer(_lexer, str) {
     return tokens;
   }
 }
+
+function TokenStream(tokens, pos = 0) {
+  const present = pos < tokens.length;
+
+  function next() {
+    return TokenStream(tokens, pos + 1);
+  }
+
+  function type() {
+    if (!present) {
+      throw `no token at position ${pos}`;
+    }
+
+    return tokens[pos].type;
+  }
+
+  function token() {
+    if (!present) {
+      throw `no token at position ${pos}`;
+    }
+
+    return tokens[pos].token;
+  }
+
+  return {
+    present,
+    next,
+    type,
+    token
+  };
+}
