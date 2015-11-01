@@ -1,5 +1,4 @@
-// var JS = require('jstest/jstest');
-
 require('./OptionParser');
+require('./LexerUtils');
 
 JS.Test.autorun();

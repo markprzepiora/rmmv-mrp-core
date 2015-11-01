@@ -105,9 +105,7 @@ function parseKeyVal(tokenStream) {
     return null;
   }
 
-  const [t1, t2, t3] = tokenStream.take(3);
-
-  if (t1.type != 'KEY' || t2.type != 'KEYVALSEP') {
+  if (!tokenStream.ofType('KEY') || !tokenStream.advance().ofType('KEYVALSEP')) {
     return null;
   }
 
@@ -117,7 +115,7 @@ function parseKeyVal(tokenStream) {
     return null;
   }
 
-  return [{ [t1.token]: val[0] }, tokenStream.advance(3)];
+  return [{ [tokenStream.get().token]: val[0] }, tokenStream.advance(3)];
 }
 
 function parseAnonymousObject(tokenStream) {
@@ -125,7 +123,7 @@ function parseAnonymousObject(tokenStream) {
     return null;
   }
 
-  if (tokenStream.get().type != 'BRA') {
+  if (!tokenStream.ofType('BRA')) {
     return null;
   }
 
@@ -137,11 +135,7 @@ function parseAnonymousObject(tokenStream) {
 
   const [object, ketStream] = argsMatch;
 
-  if (ketStream.empty) {
-    return null;
-  }
-
-  if (ketStream.get().type != 'KET') {
+  if (!ketStream.ofType('KET')) {
     return null;
   }
 
@@ -153,10 +147,9 @@ function parseNamedObject(tokenStream) {
     return null;
   }
 
-  const firstToken = tokenStream.get();
-  const secondToken = tokenStream.advance().get();
+  const secondTokenStream = tokenStream.advance();
 
-  if (firstToken.type != 'BRA' || secondToken.type != 'IDENTIFIER') {
+  if (!tokenStream.ofType('BRA') || !secondTokenStream.ofType('IDENTIFIER')) {
     return null;
   }
 
@@ -168,15 +161,11 @@ function parseNamedObject(tokenStream) {
 
   const [object, ketStream] = argsMatch;
 
-  if (ketStream.empty) {
+  if (!ketStream.ofType('KET')) {
     return null;
   }
 
-  if (ketStream.get().type != 'KET') {
-    return null;
-  }
-
-  return [{ ...object, type: secondToken.token }, ketStream.advance()];
+  return [{ ...object, type: secondTokenStream.get().token }, ketStream.advance()];
 }
 
 function parseTokens(tokens) {
