@@ -416,7 +416,7 @@ var WHITESPACE = (0, _LexerUtils.skip)((0, _LexerUtils.regex)('WHITESPACE', /^\s
 var IDENTIFIER = (0, _LexerUtils.regex)('IDENTIFIER', /[a-zA-Z_][a-zA-Z0-9-_]*/);
 var KEY = (0, _LexerUtils.regex)('KEY', /[a-zA-Z_][a-zA-Z0-9-_]*/);
 var KEYVALSEP = (0, _LexerUtils.regex)('KEYVALSEP', /:/);
-var BARESTRING = (0, _LexerUtils.regex)('BARESTRING', /[^,:><"]+/);
+var BARESTRING = (0, _LexerUtils.regex)('BARESTRING', /[^,:><"]+(?!\s+[^,:><"]+\s*:)/);
 var COMMA = (0, _LexerUtils.regex)('COMMA', /,/);
 var NUMBER = (0, _LexerUtils.regex)('NUMBER', /-?[0-9]+(\.[0-9]+)?/);
 var BOOLEAN = (0, _LexerUtils.regex)('BOOLEAN', /(true|false)/, 'i');
@@ -460,24 +460,78 @@ function parseArgs(tokenStream) {
   var result, nextArg, nextStream;
 
   while (result = parseArg(tokenStream)) {
+
+    // We want to support two different syntaxes, because the RPG Maker
+    // community has ridiculous conventions:
+    //
+    //     <currency value: 10, name: Gold Stars>
+    //
+    // In the above, a comma separates key-value pairs. But we also want to
+    // support,
+    //
+    //     <currency value: 10 name: Gold Stars>
+    //
+    // Where the commas between key value pairs are optional. However, commas
+    // are still required between positional args. So this is,
+    //
+    //     <currency value: 10 name: Gold Stars foo, bar, baz>
+    //
+    // is not valid, because it's ambiguous -- either of these two
+    // interpretatations are reasonable:
+    //
+    //     { ..., name: "Gold Stars", args: ["foo", "bar", "baz"] }
+    //
+    //     { ..., name: "Gold Stars foo", args: ["bar", "baz"] }
+    //
+    // If it weren't for allowing bare strings, everything would be okay. :)
+    //
+    // So there's a couple of things we have to do. First, we need to modify
+    // our bare-string lexer (already done) not to lex multi-word bare strings
+    // ending with a key and a colon. This is so that,
+    //
+    //     <currency name: Gold Stars value: 10>
+    //
+    // lexes into ..., Token('BARESTRING', 'Gold Stars'), Token('KEY', 'value'), ...
+    // instead of ..., Token('BARESTRING', 'Gold Stars value'), Token('KEYVALSEP', ':'), ...
+    //
+    // Next, if we parse a key-value pair we need to see what token follows it.
+    // It may either be
+    //
+    // 1. A comma, in which case we're done checking. We move onto the next
+    //    iteration.
+    // 2. A key-value pair, in which case we proceed like above, but we don't
+    //    skip over the comma. (Since there isn't one.)
+    // 3. A closing ket.
+    //
+    // All other following tokens are invalid.
+
     var _result = result;
 
     var _result2 = _slicedToArray(_result, 2);
 
     nextArg = _result2[0];
     nextStream = _result2[1];
-
     if (typeof nextArg === 'object') {
       options = _extends({}, options, nextArg);
+
+      var isFollowedByComma = nextStream.ofType('COMMA');
+      var isFollowedByKeyVal = nextStream.ofType('KEY') && nextStream.advance().ofType('KEYVALSEP');
+
+      if (isFollowedByComma) {
+        tokenStream = nextStream.advance();
+      } else if (isFollowedByKeyVal) {
+        tokenStream = nextStream;
+      } else {
+        return [options, nextStream];
+      }
     } else {
       options = _extends({}, options, { args: options.args.concat(nextArg) });
-    }
 
-    if (nextStream.empty || nextStream.get().type != 'COMMA') {
-      return [options, nextStream];
+      if (nextStream.empty || nextStream.get().type != 'COMMA') {
+        return [options, nextStream];
+      }
+      tokenStream = nextStream.advance();
     }
-
-    tokenStream = nextStream.advance();
   }
 
   return [options, tokenStream];

@@ -102,6 +102,29 @@ JS.Test.describe("OptionParser", function() {
     this.assertEqual(0.5, object.probability);
   });
 
+  this.describe("optional commas between key-value pairs", function() {
+    this.it("makes commas between key-value pairs optional", function() {
+      var payload = '<currencyShop belongsTo: "sample name" andCosts: 25>';
+      var optionsList = parse(payload, 'currencyShop');
+
+      this.assertEqual({ type: 'currencyShop', belongsTo: 'sample name', andCosts: 25, args: [] }, optionsList);
+    });
+
+    this.it("still requires positional args to be separated by commas", function() {
+      var payload = '<currencyShop belongsTo: "sample name" andCosts: 25 foo, bar, baz>';
+      var optionsList = parse(payload, 'currencyShop');
+
+      this.assertNull(optionsList);
+    });
+
+    this.it("works with positional args", function() {
+      var payload = '<belongsTo: "sample name", foo, bar, baz>';
+      var optionsList = parse(payload, 'currencyShop');
+
+      this.assertEqual({ belongsTo: 'sample name', args: ['foo', 'bar', 'baz'] }, optionsList);
+    });
+  });
+
   this.it("parses key-value pairs and positional args interspersed", function() {
     var payload = `
       <Currency Justice Points, probability: 0.5, "Foo">
