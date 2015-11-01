@@ -79,6 +79,7 @@ exports.seq = seq;
 exports.precededByToken = precededByToken;
 exports.map = map;
 exports.or = or;
+exports.repeat = repeat;
 exports.Lexer = Lexer;
 
 function _toConsumableArray(arr) {
@@ -328,16 +329,17 @@ function or() {
   };
 }
 
-function Lexer(_lexer) {
-  return function (str) {
+function repeat(matcher) {
+  return function (previousTokens, charStream) {
     var tokens = [];
-    var newTokens, newStr;
     var counter = 0;
 
-    var charStream = CharacterStream(str);
+    while (charStream.present) {
+      var match = matcher(tokens, charStream);
 
-    while (!charStream.empty) {
-      var match = _lexer(tokens, charStream) || LexerResponse([charStream.Token('UNKNOWN', charStream.rest())], charStream.flush());
+      if (!match) {
+        break;
+      }
 
       tokens = [].concat(_toConsumableArray(tokens), _toConsumableArray(match.tokens));
 
@@ -348,7 +350,16 @@ function Lexer(_lexer) {
       charStream = match.newCharacterStream;
     }
 
-    return tokens;
+    return LexerResponse(tokens, charStream);
+  };
+}
+
+function Lexer(_lexer) {
+  return function (str) {
+    var charStream = CharacterStream(str);
+    var matcher = repeat(or(_lexer, regex('UNKNOWN', /.*/)));
+
+    return matcher([], charStream).tokens;
   };
 }
 
@@ -412,11 +423,21 @@ var _LexerUtils = require('./LexerUtils');
 
 var BRA = (0, _LexerUtils.regex)('BRA', /</);
 var KET = (0, _LexerUtils.regex)('KET', />/);
-var WHITESPACE = (0, _LexerUtils.skip)((0, _LexerUtils.regex)('WHITESPACE', /^\s+/));
+var WHITESPACE = (0, _LexerUtils.skip)((0, _LexerUtils.regex)('WHITESPACE', /\s+/));
 var IDENTIFIER = (0, _LexerUtils.regex)('IDENTIFIER', /[a-zA-Z_][a-zA-Z0-9-_]*/);
 var KEY = (0, _LexerUtils.regex)('KEY', /[a-zA-Z_][a-zA-Z0-9-_]*/);
 var KEYVALSEP = (0, _LexerUtils.regex)('KEYVALSEP', /:/);
-var BARESTRING = (0, _LexerUtils.regex)('BARESTRING', /[^,:><"]+(?!\s+[^,:><"]+\s*:)/);
+
+// Bare strings are complicated because we need to allow commas between key
+// value pairs to be optional. So in the following string,
+//
+//     foo bar baz: 10
+//
+// we want to match 'foo bar', not 'foo bar baz'
+
+var SIGNIFICANT_WHITESPACE = (0, _LexerUtils.regex)('SIGNIFICANT_WHITESPACE', /\s+/);
+// const BARESTRING   = regex('BARESTRING', /([^,:><"]+[^,:><"\S](?!\s+[^,:><"]+\s*:)/);
+var BARESTRING = (0, _LexerUtils.regex)('BARESTRING', /[^,:><"]+/);
 var COMMA = (0, _LexerUtils.regex)('COMMA', /,/);
 var NUMBER = (0, _LexerUtils.regex)('NUMBER', /-?[0-9]+(\.[0-9]+)?/);
 var BOOLEAN = (0, _LexerUtils.regex)('BOOLEAN', /(true|false)/, 'i');

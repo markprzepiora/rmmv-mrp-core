@@ -34,6 +34,11 @@ JS.Test.describe("OptionParser", function() {
     this.assertEqual(object.probability, 50);
   });
 
+  this.it("does not loop infintely on a blank string", function() {
+    var object = parse("");
+    this.assertNull(object);
+  });
+
   this.it("parses quoted strings", function() {
     var payload =
       '<name: "Gold ,<> :Stars", number: 10, probability: 50>';
@@ -105,6 +110,13 @@ JS.Test.describe("OptionParser", function() {
   this.describe("optional commas between key-value pairs", function() {
     this.it("makes commas between key-value pairs optional", function() {
       var payload = '<currencyShop belongsTo: "sample name" andCosts: 25>';
+      var optionsList = parse(payload, 'currencyShop');
+
+      this.assertEqual({ type: 'currencyShop', belongsTo: 'sample name', andCosts: 25, args: [] }, optionsList);
+    });
+
+    this.it("makes commas between key-value pairs optional even with bare string values", function() {
+      var payload = '<currencyShop belongsTo: sample name andCosts: 25>';
       var optionsList = parse(payload, 'currencyShop');
 
       this.assertEqual({ type: 'currencyShop', belongsTo: 'sample name', andCosts: 25, args: [] }, optionsList);
