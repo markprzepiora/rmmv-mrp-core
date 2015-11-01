@@ -6,6 +6,7 @@ var babelify    = require('babelify');
 var watchify    = require('watchify');
 var source      = require('vinyl-source-stream');
 var browserSync = require('browser-sync');
+var colors      = require('colors');
 
 var files = [
   {
@@ -47,12 +48,12 @@ var createBundle = function(options, callback) {
       })
       .pipe(source(options.output))
       .pipe(gulp.dest(options.destination))
-      .pipe(browserSync.reload({ stream: true }))
       .on('end', function() {
         var time = (new Date().getTime() - startTime) / 1000;
         return console.log(
           options.output.cyan + " was browserified: " + (time + 's').magenta);
       })
+      .pipe(browserSync.reload({ stream: true }))
   };
   if (global.isWatching) {
     bundler.on('update', rebundle);
