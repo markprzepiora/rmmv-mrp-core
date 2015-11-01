@@ -122,7 +122,7 @@ export function optional(matcher) {
   }
 }
 
-export function seq2(first, second) {
+function seq2(first, second) {
   return function(previousTokens, charStream) {
     const firstMatch = first(previousTokens, charStream);
 

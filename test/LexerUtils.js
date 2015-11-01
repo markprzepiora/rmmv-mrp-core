@@ -1,4 +1,6 @@
-import { regex, or, skip, optional, seq, Lexer, Token } from '../src/OptionParser/LexerUtils';
+import {
+  regex, or, skip, optional, seq, Lexer, Token, precededByToken, map
+} from '../src/OptionParser/LexerUtils';
 
 JS.Test.describe("LexerUtils", function() {
   this.describe("regex", function() {
@@ -68,6 +70,41 @@ JS.Test.describe("LexerUtils", function() {
           Token('WORD',  'key', 0),
           Token('COLON', ':',   3),
           Token('WORD',  'val', 5),
+        ],
+        tokens
+      );
+    });
+  });
+
+  this.describe("precededByToken", function() {
+    this.it("matches a lexer only if preceded by another token", function() {
+      const KEY   = regex('KEY', /[a-z]+/);
+      const COLON = regex('COLON', /:/);
+      const VAL   = seq(precededByToken('COLON'), regex('VAL', /[a-z]+/));
+
+      const tokens = Lexer(or(COLON, VAL, KEY))('foo:bar');
+
+      this.assertEqual(
+        [
+          Token('KEY', 'foo', 0),
+          Token('COLON', ':', 3),
+          Token('VAL', 'bar', 4),
+        ],
+        tokens
+      );
+    });
+  });
+
+  this.describe(".map", function() {
+    this.it("applies a map function to all token values returned by a lexer", function() {
+      const NUMBER = map(Number, regex('NUMBER', /[0-9]+/));
+      const WHITESPACE = skip(regex('WHITESPACE', /\s+/));
+      const tokens = Lexer(or(NUMBER, WHITESPACE))('123 789');
+
+      this.assertEqual(
+        [
+          Token('NUMBER', 123, 0),
+          Token('NUMBER', 789, 4),
         ],
         tokens
       );
