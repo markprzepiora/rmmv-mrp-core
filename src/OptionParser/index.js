@@ -183,9 +183,12 @@ function parseNamedObject(tokenStream) {
   return [{ ...object, type: secondTokenStream.get().token }, ketStream.advance()];
 }
 
-function parseTokens(tokens) {
-  var tokenStream = TokenStream(tokens);
-  var parsed = parseAnonymousObject(tokenStream, 0) || parseNamedObject(tokenStream, 0);
+function parseObject(tokenStream) {
+  return parseAnonymousObject(tokenStream) || parseNamedObject(tokenStream);
+}
+
+function parseTokenStream(tokenStream) {
+  var parsed = parseObject(tokenStream);
   if (parsed) {
     return parsed[0];
   } else {
@@ -193,11 +196,54 @@ function parseTokens(tokens) {
   }
 }
 
-function parse(str) {
-  return parseTokens(lex(str));
+export function parse(str) {
+  return parseTokenStream(TokenStream(lex(str)));
 }
 
-export default {
-  parse: parse,
-  lex: lex
-};
+// Extract all tags contained inside a possibly-unrelated string of text.
+export function extractAll(str) {
+  var tokenStream = TokenStream(lex(str));
+  var objects = [];
+
+  while (tokenStream.present) {
+    var parsed = parseObject(tokenStream);
+
+    if (parsed) {
+      objects.push(parsed[0]);
+      tokenStream = parsed[1];
+    } else {
+      tokenStream = tokenStream.advance();
+    }
+  }
+
+  return objects;
+}
+
+function extractFirstMatching(fn) {
+  return function(str) {
+    var tokenStream = TokenStream(lex(str));
+    var objects = [];
+
+    while (tokenStream.present) {
+      var parsed = parseObject(tokenStream);
+
+      if (parsed && fn(parsed[0])) {
+        return parsed[0];
+      } else {
+        tokenStream = tokenStream.advance();
+      }
+    }
+
+    return null;
+  }
+}
+
+export const extractFirst = extractFirstMatching(() => true);
+
+export function extractFirstOfType(str, type) {
+  return extractFirstMatching((opts) => opts.type === type)(str);
+}
+
+export function extractAllOfType(str, type) {
+  return extractAll(str).filter((opts) => opts.type === type);
+}
