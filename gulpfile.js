@@ -2,9 +2,7 @@ var gulp        = require('gulp');
 var browserify  = require('browserify');
 var watchify    = require('watchify');
 var source      = require('vinyl-source-stream');
-var colors      = require('colors');
 var babelify    = require('babelify');
-var _           = require('lodash');
 var browserSync = require('browser-sync');
 
 var files = [
@@ -31,7 +29,7 @@ var createBundle = function(options, callback) {
   };
 
   if (global.isWatching) {
-    var bundler = watchify(browserify(_.extend(opts, {})));
+    var bundler = watchify(browserify(opts));
   } else {
     var bundler = browserify(opts);
   }
