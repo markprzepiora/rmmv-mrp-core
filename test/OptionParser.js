@@ -1,6 +1,6 @@
 import {
   lex, parse, extractAll, extractAllOfType, extractFirst, extractFirstOfType
-} from '../src/OptionParser';
+} from '../lib/OptionParser';
 
 JS.Test.describe("OptionParser", function() {
   this.it("parse parses an anonymous object", function() {

@@ -9,7 +9,7 @@ var browserSync = require('browser-sync');
 
 var files = [
   {
-    input: ['./src/mrp-core-global.js'],
+    input: ['./lib/mrp-core-global.js'],
     output: 'rmmv-mrp-core.js',
     extensions: ['.js'],
     destination: './dist'

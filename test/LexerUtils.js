@@ -1,6 +1,6 @@
 import {
   regex, or, skip, optional, seq, Lexer, Token, precededByToken, map
-} from '../src/OptionParser/LexerUtils';
+} from '../lib/OptionParser/LexerUtils';
 
 JS.Test.describe("LexerUtils", function() {
   this.describe("regex", function() {
