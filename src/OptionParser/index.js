@@ -57,6 +57,7 @@ ARG = KEY : VAL | VAL
 
 */
 
+// Parses a list of arguments.
 function parseArgs(tokenStream) {
   var options = { args: [] };
   var result, nextArg, nextStream;
@@ -80,26 +81,12 @@ function parseArgs(tokenStream) {
   return [options, tokenStream];
 }
 
+// Parses an argument - either a key-value pair or a positional argument.
 function parseArg(tokenStream) {
   return parseKeyVal(tokenStream) || parseVal(tokenStream);
 }
 
-function parseVal(tokenStream) {
-  if (tokenStream.empty) {
-    return null;
-  }
-
-  var token = tokenStream.get();
-
-  switch(token.type) {
-    case 'NUMBER':     return [Number(token.token), tokenStream.advance()];
-    case 'BARESTRING':
-    case 'KEY':        return [token.token, tokenStream.advance()];
-    case 'BOOLEAN':    return [token.token.toLowerCase() === 'true' ? true : false, tokenStream.advance()];
-    default:           return null;
-  }
-}
-
+// Parses a key-value pair.
 function parseKeyVal(tokenStream) {
   if (tokenStream.length < 3) {
     return null;
@@ -118,6 +105,29 @@ function parseKeyVal(tokenStream) {
   return [{ [tokenStream.get().token]: val[0] }, tokenStream.advance(3)];
 }
 
+// Parses the value from a key-value pair, or a bare value as a positional
+// argument.
+function parseVal(tokenStream) {
+  if (tokenStream.empty) {
+    return null;
+  }
+
+  var token = tokenStream.get();
+
+  switch(token.type) {
+    case 'NUMBER':     return [Number(token.token), tokenStream.advance()];
+    case 'BARESTRING':
+    case 'KEY':        return [token.token, tokenStream.advance()];
+    case 'BOOLEAN':    return [token.token.toLowerCase() === 'true' ? true : false, tokenStream.advance()];
+    default:           return null;
+  }
+}
+
+// Parses an "anonymous" object, that is one without a name.
+//
+// Example:
+//
+//   <foo: 123, bar: "baz">
 function parseAnonymousObject(tokenStream) {
   if (tokenStream.length < 3) {
     return null;
@@ -142,6 +152,11 @@ function parseAnonymousObject(tokenStream) {
   return [object, ketStream.advance()];
 }
 
+// Parses a "named" object.
+//
+// Example:
+//
+//   <Currency name: "Foo">
 function parseNamedObject(tokenStream) {
   if (tokenStream.length < 3) {
     return null;
