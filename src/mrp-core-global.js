@@ -1,5 +1,5 @@
 import BattleObserver from './BattleObserver';
-import OptionParser from './OptionParser';
+import * as OptionParser from './OptionParser';
 
 const MRP = {
   BattleObserver: BattleObserver,

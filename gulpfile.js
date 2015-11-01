@@ -1,14 +1,16 @@
 var gulp        = require('gulp');
+var uglify      = require('gulp-uglify');
+var rename      = require('gulp-rename');
 var browserify  = require('browserify');
+var babelify    = require('babelify');
 var watchify    = require('watchify');
 var source      = require('vinyl-source-stream');
-var babelify    = require('babelify');
 var browserSync = require('browser-sync');
 
 var files = [
   {
-    input: ['./src/mrp-core.js'],
-    output: 'mrp-core.js',
+    input: ['./src/mrp-core-global.js'],
+    output: 'rmmv-mrp-core.js',
     extensions: ['.js'],
     destination: './dist'
   }, {
@@ -84,4 +86,11 @@ gulp.task('watch', ['setWatch', 'browserify'], function() {
       baseDir: './'
     }
   });
+});
+
+gulp.task('minify', ['browserify'], function() {
+  return gulp.src('./dist/rmmv-mrp-core.js')
+    .pipe(uglify())
+    .pipe(rename('rmmv-mrp-core.min.js'))
+    .pipe(gulp.dest('./dist'))
 });
