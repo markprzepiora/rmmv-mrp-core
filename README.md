@@ -92,7 +92,7 @@ Input (string):
 Output (JS object):
 
 ```js
-{ firstName: 'Sakura', lastName: 'Kinomoto', args: [] }
+{ type: 'Currency', name: 'Gold Stars', symbol: '$', args: [] }
 ```
 
 ### Syntax Example 5 (value types)
