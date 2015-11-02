@@ -54,9 +54,9 @@ module.exports = exports['default'];
 // type - e.g. 'UNDERSCORE'
 // token - e.g. '_'
 // pos - the (starting) position in the string where it occurred
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
@@ -71,6 +71,7 @@ var _extends = Object.assign || function (target) {
 };
 
 exports.Token = _Token;
+exports.CharacterStream = CharacterStream;
 exports.TokenStream = TokenStream;
 exports.regex = regex;
 exports.skip = skip;
@@ -80,6 +81,8 @@ exports.precededByToken = precededByToken;
 exports.map = map;
 exports.or = or;
 exports.repeat = repeat;
+exports.concat = concat;
+exports.notFollowedBy = notFollowedBy;
 exports.Lexer = Lexer;
 
 function _toConsumableArray(arr) {
@@ -343,6 +346,11 @@ function repeat(matcher) {
 
       tokens = [].concat(_toConsumableArray(tokens), _toConsumableArray(match.tokens));
 
+      // Don't get caught in an infinite loop.
+      if (match.newCharacterStream.pos === charStream.pos) {
+        return LexerResponse(tokens, match.newCharacterStream);
+      }
+
       if (counter++ > 10000) {
         throw "tried to lex more than 10,000 tokens - this is probably a bug.";
       }
@@ -354,10 +362,45 @@ function repeat(matcher) {
   };
 }
 
+// Concatenates the (string) tokens returned by a matcher into a single string.
+
+function concat(type, matcher) {
+  return function (previousTokens, charStream) {
+    var match = matcher(previousTokens, charStream);
+
+    if (match) {
+      var joinedToken = match.tokens.map(function (t) {
+        return t.token;
+      }).join("");
+      return LexerResponse([charStream.Token(type, joinedToken)], match.newCharacterStream);
+    } else {
+      return null;
+    }
+  };
+}
+
+function notFollowedBy(mustMatch, mustNotMatch) {
+  return function (previousTokens, charStream) {
+    var match = mustMatch(previousTokens, charStream);
+
+    if (!match) {
+      return null;
+    }
+
+    var nextMatch = mustNotMatch([].concat(_toConsumableArray(previousTokens), _toConsumableArray(match.tokens)), match.newCharacterStream);
+
+    if (!nextMatch) {
+      return match;
+    } else {
+      return null;
+    }
+  };
+}
+
 function Lexer(_lexer) {
   return function (str) {
     var charStream = CharacterStream(str);
-    var matcher = repeat(or(_lexer, regex('UNKNOWN', /.*/)));
+    var matcher = repeat(or(_lexer, regex('UNKNOWN', /[^]*/)));
 
     return matcher([], charStream).tokens;
   };
@@ -427,6 +470,7 @@ var WHITESPACE = (0, _LexerUtils.skip)((0, _LexerUtils.regex)('WHITESPACE', /\s+
 var IDENTIFIER = (0, _LexerUtils.regex)('IDENTIFIER', /[a-zA-Z_][a-zA-Z0-9-_]*/);
 var KEY = (0, _LexerUtils.regex)('KEY', /[a-zA-Z_][a-zA-Z0-9-_]*/);
 var KEYVALSEP = (0, _LexerUtils.regex)('KEYVALSEP', /:/);
+var KEYVAL = (0, _LexerUtils.seq)(KEY, (0, _LexerUtils.optional)(WHITESPACE), KEYVALSEP);
 
 // Bare strings are complicated because we need to allow commas between key
 // value pairs to be optional. So in the following string,
@@ -436,8 +480,10 @@ var KEYVALSEP = (0, _LexerUtils.regex)('KEYVALSEP', /:/);
 // we want to match 'foo bar', not 'foo bar baz'
 
 var SIGNIFICANT_WHITESPACE = (0, _LexerUtils.regex)('SIGNIFICANT_WHITESPACE', /\s+/);
-// const BARESTRING   = regex('BARESTRING', /([^,:><"]+[^,:><"\S](?!\s+[^,:><"]+\s*:)/);
-var BARESTRING = (0, _LexerUtils.regex)('BARESTRING', /[^,:><"]+/);
+var BAREWORD = (0, _LexerUtils.regex)('BAREWORD', /[^,:><"\s]+/);
+
+var BARESTRING = (0, _LexerUtils.concat)('BARESTRING', (0, _LexerUtils.seq)(BAREWORD, (0, _LexerUtils.repeat)((0, _LexerUtils.notFollowedBy)((0, _LexerUtils.seq)(SIGNIFICANT_WHITESPACE, BAREWORD), (0, _LexerUtils.seq)((0, _LexerUtils.optional)(WHITESPACE), KEYVALSEP)))));
+
 var COMMA = (0, _LexerUtils.regex)('COMMA', /,/);
 var NUMBER = (0, _LexerUtils.regex)('NUMBER', /-?[0-9]+(\.[0-9]+)?/);
 var BOOLEAN = (0, _LexerUtils.regex)('BOOLEAN', /(true|false)/, 'i');

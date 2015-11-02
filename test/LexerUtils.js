@@ -1,5 +1,6 @@
 import {
-  regex, or, skip, optional, seq, Lexer, Token, precededByToken, map
+  regex, or, skip, optional, seq, Lexer, Token, precededByToken, map, repeat, concat, notFollowedBy,
+  CharacterStream
 } from '../lib/OptionParser/LexerUtils';
 
 JS.Test.describe("LexerUtils", function() {
@@ -108,6 +109,45 @@ JS.Test.describe("LexerUtils", function() {
         ],
         tokens
       );
+    });
+  });
+
+  this.describe(".repeat", function() {
+    this.it("repeats a lexer until it produces no more matches", function() {
+      const WORD  = regex('WORD', /\S+\s?/);
+      const WORDS = repeat(WORD);
+      const { tokens } = WORDS([], CharacterStream('foo bar baz'));
+
+      this.assertEqual([
+        Token('WORD', 'foo ', 0),
+        Token('WORD', 'bar ', 4),
+        Token('WORD', 'baz',  8)
+      ], tokens);
+    });
+  });
+
+  this.describe(".concat", function() {
+    this.it("concatenates the string-valued tokens returned by a matcher", function() {
+      const WORD = regex('WORD', /\S+\s?/);
+      const WORDS = repeat(WORD);
+      const PHRASE = concat('PHRASE', WORDS);
+      const tokens = Lexer(PHRASE)('this is a phrase');
+
+      this.assertEqual([Token('PHRASE', 'this is a phrase', 0)], tokens);
+    });
+  });
+
+  this.describe(".notFollowedBy", function() {
+    this.it("lexes using a lexer only if the second lexer does not match afterwards", function() {
+      const WORD            = regex('WORD', /[a-z]+/);
+      const NUMBER          = regex('NUMBER', /[0-9]+/);
+      const UNSUFFIXED_WORD = notFollowedBy(WORD, NUMBER);
+
+      const match = UNSUFFIXED_WORD([], CharacterStream('foo'));
+      const notAMatch = UNSUFFIXED_WORD([], CharacterStream('foo1'));
+
+      this.assertEqual([Token('WORD', 'foo', 0)], match.tokens);
+      this.assertNull(notAMatch);
     });
   });
 });
