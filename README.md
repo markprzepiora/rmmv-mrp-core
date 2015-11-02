@@ -141,3 +141,23 @@ Like `extractAll`, but returns the first match or `null` if none exist.
 #### `MRP.OptionParser.extractFirstOfType(str, type)`
 
 Like `extractAllOfType`, but returns the first match or `null` if none exist.
+
+### BattleObserver
+
+A simple event-emitter interface for listening to battle events.
+
+Example:
+
+```js
+MRP.BattleObserver.on('turn.start', function() {
+  // do whatever...
+});
+```
+
+Implemented events:
+
+- `turn.start`
+- `turn.end`
+- `battle.start`
+- `battle.end`
+- More soon.
