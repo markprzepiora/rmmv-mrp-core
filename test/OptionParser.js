@@ -3,6 +3,16 @@ import {
 } from '../lib/OptionParser';
 
 JS.Test.describe("OptionParser", function() {
+  this.it("parse parses a simple array of args", function() {
+    var payload = `
+      <foo, "bar", 3>
+    `;
+    var object = parse(payload);
+
+    this.assertNotNull(object);
+    this.assertEqual({ args: ['foo', 'bar', 3] }, object);
+  });
+
   this.it("parse parses an anonymous object", function() {
     var payload = `
       <name: Gold Stars, number: 10, probability: 50>

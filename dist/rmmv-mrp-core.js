@@ -509,7 +509,7 @@ COMMA,
 
 // <Identifier key: "val">
 //  ^^^^^^^^^^
-(0, _LexerUtils.seq)((0, _LexerUtils.precededByToken)('BRA'), (0, _LexerUtils.optional)(WHITESPACE), IDENTIFIER), KEYVALSEP, NUMBER, BOOLEAN, QUOTEDSTRING, BARESTRING));
+(0, _LexerUtils.seq)((0, _LexerUtils.precededByToken)('BRA'), (0, _LexerUtils.optional)(WHITESPACE), (0, _LexerUtils.notFollowedBy)(IDENTIFIER, COMMA)), KEYVALSEP, NUMBER, BOOLEAN, QUOTEDSTRING, BARESTRING));
 
 /*
 
