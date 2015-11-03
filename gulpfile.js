@@ -31,12 +31,11 @@ var createBundle = function(options, callback) {
     cache: {}
   };
 
+  var bundler = browserify(opts).transform("babelify");
+
   if (global.isWatching) {
-    var bundler = watchify(browserify(opts));
-  } else {
-    var bundler = browserify(opts);
+    bundler = watchify(bundler);
   }
-  bundler = bundler.transform(babelify);
 
   var rebundle = function() {
     var startTime = new Date().getTime();

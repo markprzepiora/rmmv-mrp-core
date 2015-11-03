@@ -8,7 +8,10 @@
     "url": "git://github.com/markprzepiora/rmmv-mrp-core"
   },
   "devDependencies": {
-    "babelify": "~6.4.0",
+    "babel": "^6.0.15",
+    "babel-preset-es2015": "^6.0.15",
+    "babel-preset-stage-2": "^6.0.15",
+    "babelify": "^7.2.0",
     "browser-sync": "^1.7.1",
     "browserify": "^12.0.1",
     "colors": "^1.1.2",
