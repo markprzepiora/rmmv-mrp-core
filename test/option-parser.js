@@ -1,6 +1,6 @@
 import {
   lex, parse, extractAll, extractAllOfType, extractFirst, extractFirstOfType
-} from '../lib/option-parser';
+} from '../src/module/option-parser';
 
 JS.Test.describe("option-parser", function() {
   this.it("parse parses a simple array of args", function() {

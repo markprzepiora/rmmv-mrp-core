@@ -1,7 +1,7 @@
 import {
   regex, or, skip, optional, seq, Lexer, Token, precededByToken, map, repeat, concat, notFollowedBy,
   CharacterStream
-} from '../lib/option-parser/lexer-utils';
+} from '../src/module/option-parser/lexer-utils';
 
 JS.Test.describe("lexer-utils", function() {
   this.describe("regex", function() {

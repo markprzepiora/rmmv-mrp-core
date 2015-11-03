@@ -10,7 +10,7 @@ var colors      = require('colors');
 
 var files = [
   {
-    input: ['./lib/mrp-core-global.js'],
+    input: ['./src/global.js'],
     output: 'rmmv-mrp-core.js',
     extensions: ['.js'],
     destination: './dist'
