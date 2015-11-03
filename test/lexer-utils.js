@@ -1,9 +1,9 @@
 import {
   regex, or, skip, optional, seq, Lexer, Token, precededByToken, map, repeat, concat, notFollowedBy,
   CharacterStream
-} from '../lib/OptionParser/LexerUtils';
+} from '../lib/option-parser/lexer-utils';
 
-JS.Test.describe("LexerUtils", function() {
+JS.Test.describe("lexer-utils", function() {
   this.describe("regex", function() {
     this.it("parses an anonymous object", function() {
       const WORD   = regex('WORD', /\S+\s*/);

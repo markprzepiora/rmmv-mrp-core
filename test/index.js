@@ -1,4 +1,4 @@
-require('./OptionParser');
-require('./LexerUtils');
+require('./option-parser');
+require('./lexer-utils');
 
 JS.Test.autorun();
