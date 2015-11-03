@@ -17,14 +17,14 @@ If you are developing your plugins using Browserify, you can load in only the mo
 
 First, add the `rmmv-mrp-core` module to your project:
 
-    npm install --save-dev markprzepiora/rmmv-mrp-core
+    npm install --save-dev rmmv-mrp-core
 
 You can now import an individual module and use it.
 
 Example usage (ES6 modules):
 
 ```javascript
-import { extractAll } from 'rmmv-mrp-core/lib/OptionParser';
+import { extractAll } from 'rmmv-mrp-core/option-parser';
 
 console.log(extractFirst(`
   some preceding text
@@ -35,7 +35,7 @@ console.log(extractFirst(`
 
 # Modules
 
-## OptionParser
+## `MRP.OptionParser`
 
 Never again write brittle regexes for parsing configuration settings. The `OptionParser` module allows your users to define settings written in a familiar, human-readable syntax.
 
@@ -142,7 +142,7 @@ Like `extractAll`, but returns the first match or `null` if none exist.
 
 Like `extractAllOfType`, but returns the first match or `null` if none exist.
 
-### BattleObserver
+### `MRP.BattleObserver`
 
 A simple event-emitter interface for listening to battle events.
 
