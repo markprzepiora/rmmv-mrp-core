@@ -26,10 +26,5 @@
     "watchify": "^3.6.0"
   },
   "author": "Mark Przepiora <mark.przepiora@gmail.com>",
-  "license": "MIT",
-  "browserify": {
-    "transform": [
-      "babelify"
-    ]
-  }
+  "license": "MIT"
 }
