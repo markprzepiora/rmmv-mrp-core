@@ -18,5 +18,7 @@ cd "$PROGDIR"/..
 
 rm -rf build
 mkdir build
+mkdir build/dist
 cp package.json README.md build/
+cp dist/rmmv-mrp-core*.js build/dist/
 node_modules/babel-cli/bin/babel.js src/module --out-dir build
