@@ -1,15 +1,23 @@
 require('blueimp-canvas-to-blob');
 var saveAs = require('browser-filesaver').saveAs;
 
-var TILE_SIZE = 48;
-var TILES_X = 17;
-var TILES_Y = 13;
+function getGeometry() {
+  return {
+    TILE_WIDTH:       $gameMap.tileWidth(),
+    TILE_HEIGHT:      $gameMap.tileHeight(),
+    TILES_X:          Math.floor(SceneManager._screenWidth / $gameMap.tileWidth()),
+    TILES_Y:          Math.floor(SceneManager._screenHeight / $gameMap.tileHeight()),
+    SCREEN_WIDTH_PX:  SceneManager._screenWidth,
+    SCREEN_HEIGHT_PX: SceneManager._screenHeight,
+  }
+}
 
 function addScreenshotToCanvas(x, y, targetCanvas) {
-  var tilesX  = x * TILES_X;
-  var tilesY  = y * TILES_Y;
-  var screenX = tilesX * TILE_SIZE;
-  var screenY = tilesY * TILE_SIZE;
+  const geometry = getGeometry();
+  const tilesX   = x * geometry.TILES_X;
+  const tilesY   = y * geometry.TILES_Y;
+  const screenX  = tilesX * geometry.TILE_WIDTH;
+  const screenY  = tilesY * geometry.TILE_HEIGHT;
 
   $gameMap._displayX = tilesX;
   $gameMap._displayY = tilesY;
@@ -20,13 +28,14 @@ function addScreenshotToCanvas(x, y, targetCanvas) {
 }
 
 export default function exportMap() {
-  const imageX = $dataMap.width * TILE_SIZE;
-  const imageY = $dataMap.height * TILE_SIZE;
-  const pagesX = Math.ceil(imageX / SceneManager._screenWidth);
-  const pagesY = Math.ceil(imageY / SceneManager._screenHeight);
+  const geometry = getGeometry();
+  const imageX   = $dataMap.width * geometry.TILE_WIDTH;
+  const imageY   = $dataMap.height * geometry.TILE_HEIGHT;
+  const pagesX   = Math.ceil(imageX / geometry.SCREEN_WIDTH_PX);
+  const pagesY   = Math.ceil(imageY / geometry.SCREEN_HEIGHT_PX);
 
   // This canvas will hold the entire, big-ass image.
-  const canvas = document.createElement('canvas');
+  const canvas  = document.createElement('canvas');
   canvas.width  = imageX;
   canvas.height = imageY;
 

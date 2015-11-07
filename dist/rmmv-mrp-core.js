@@ -697,7 +697,27 @@ var MRP = _interopRequireWildcard(_index);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-window.MRP = MRP;
+window.MRP = MRP; //=============================================================================
+// RPG Maker MV MRP Core Module
+// rmmv-mrp-core.js
+// Version: 0.0.5
+//=============================================================================
+
+//=============================================================================
+/*:
+ * @plugindesc A collection of utilities for RPG Maker MV game designers and
+ * plugin writers.
+ * @author Mark Przepiora
+ *
+ * @help
+ * ============================================================================
+ * Instructions
+ * ============================================================================
+ *
+ * Please look on GitHub for complete instructions:
+ * https://github.com/markprzepiora/rmmv-mrp-core
+ */
+//=============================================================================
 
 },{"./module/index":20}],19:[function(require,module,exports){
 'use strict';
@@ -784,15 +804,23 @@ exports.default = exportMap;
 require('blueimp-canvas-to-blob');
 var saveAs = require('browser-filesaver').saveAs;
 
-var TILE_SIZE = 48;
-var TILES_X = 17;
-var TILES_Y = 13;
+function getGeometry() {
+  return {
+    TILE_WIDTH: $gameMap.tileWidth(),
+    TILE_HEIGHT: $gameMap.tileHeight(),
+    TILES_X: Math.floor(SceneManager._screenWidth / $gameMap.tileWidth()),
+    TILES_Y: Math.floor(SceneManager._screenHeight / $gameMap.tileHeight()),
+    SCREEN_WIDTH_PX: SceneManager._screenWidth,
+    SCREEN_HEIGHT_PX: SceneManager._screenHeight
+  };
+}
 
 function addScreenshotToCanvas(x, y, targetCanvas) {
-  var tilesX = x * TILES_X;
-  var tilesY = y * TILES_Y;
-  var screenX = tilesX * TILE_SIZE;
-  var screenY = tilesY * TILE_SIZE;
+  var geometry = getGeometry();
+  var tilesX = x * geometry.TILES_X;
+  var tilesY = y * geometry.TILES_Y;
+  var screenX = tilesX * geometry.TILE_WIDTH;
+  var screenY = tilesY * geometry.TILE_HEIGHT;
 
   $gameMap._displayX = tilesX;
   $gameMap._displayY = tilesY;
@@ -803,10 +831,11 @@ function addScreenshotToCanvas(x, y, targetCanvas) {
 }
 
 function exportMap() {
-  var imageX = $dataMap.width * TILE_SIZE;
-  var imageY = $dataMap.height * TILE_SIZE;
-  var pagesX = Math.ceil(imageX / SceneManager._screenWidth);
-  var pagesY = Math.ceil(imageY / SceneManager._screenHeight);
+  var geometry = getGeometry();
+  var imageX = $dataMap.width * geometry.TILE_WIDTH;
+  var imageY = $dataMap.height * geometry.TILE_HEIGHT;
+  var pagesX = Math.ceil(imageX / geometry.SCREEN_WIDTH_PX);
+  var pagesY = Math.ceil(imageY / geometry.SCREEN_HEIGHT_PX);
 
   // This canvas will hold the entire, big-ass image.
   var canvas = document.createElement('canvas');
