@@ -161,3 +161,9 @@ Implemented events:
 - `battle.start`
 - `battle.end`
 - More soon.
+
+## `MRP.MapExporter`
+
+Simply call `MRP.MapExporter();` inside your console or through an event to
+take and save a screenshot of the entire map, without your character (but all
+events) present.
