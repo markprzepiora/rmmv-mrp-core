@@ -15,6 +15,11 @@ var files = [
     extensions: ['.js'],
     destination: './dist'
   }, {
+    input: ['./src/global-map-exporter.js'],
+    output: 'rmmv-mrp-core--map-exporter.js',
+    extensions: ['.js'],
+    destination: './dist'
+  }, {
     input: ['./test/index.js'],
     output: 'test.js',
     extensions: ['.js'],
