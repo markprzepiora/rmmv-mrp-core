@@ -780,6 +780,7 @@ function eventizeSingletonMethod(object, functionName, eventName) {
 
 eventizePrototypeMethod(Game_Troop, 'onBattleStart', 'battle.start');
 eventizePrototypeMethod(Game_Troop, 'onBattleEnd', 'battle.end');
+eventizePrototypeMethod(Game_Map, 'setup', 'map.setup');
 eventizeSingletonMethod(BattleManager, 'endTurn', 'turn.end');
 eventizeSingletonMethod(BattleManager, 'startTurn', 'turn.start');
 eventizeSingletonMethod(SceneManager, 'run', 'game.start');
@@ -787,24 +788,45 @@ eventizeSingletonMethod(SceneManager, 'run', 'game.start');
 exports.default = GameObserver;
 
 },{"event-emitter":3}],20:[function(require,module,exports){
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = getGeometry;
-function getGeometry() {
-  var geometry = {};
 
-  // The pixel dimensions of each individual tile (i.e., tile size)
-  // In a typical game, these will be 48x48.
-  geometry.TILE_WIDTH = $gameMap.tileWidth();
-  geometry.TILE_HEIGHT = $gameMap.tileHeight();
+var _gameObserver = require('./game-observer');
 
+var _gameObserver2 = _interopRequireDefault(_gameObserver);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var geometry = {
+  TILE_WIDTH: null,
+  TILE_HEIGHT: null,
+  SCREEN_WIDTH_PX: null,
+  SCREEN_HEIGHT_PX: null,
+  TILES_X: null,
+  TILES_Y: null,
+  MAP_WIDTH_TILES: null,
+  MAP_HEIGHT_TILES: null,
+  MAP_WIDTH_PX: null,
+  MAP_HEIGHT_PX: null,
+  MAP_WIDTH_PAGES: null,
+  MAP_HEIGHT_PAGES: null
+};
+
+_gameObserver2.default.on('game.start', function () {
   // The pixel width and height of the visible screen (i.e. game resolution)
   // In a typical game, this will be 816x624.
   geometry.SCREEN_WIDTH_PX = SceneManager._screenWidth;
   geometry.SCREEN_HEIGHT_PX = SceneManager._screenHeight;
+});
+
+_gameObserver2.default.on('map.setup', function () {
+  // The pixel dimensions of each individual tile (i.e., tile size)
+  // In a typical game, these will be 48x48.
+  geometry.TILE_WIDTH = $gameMap.tileWidth();
+  geometry.TILE_HEIGHT = $gameMap.tileHeight();
 
   // The number of columns and rows of tiles visible on the screen at one time.
   // In a typical game, this will be 17x13.
@@ -825,17 +847,17 @@ function getGeometry() {
   // would have to move the camera in each direction to see the entire map.
   geometry.MAP_WIDTH_PAGES = Math.ceil(geometry.MAP_WIDTH_PX / geometry.SCREEN_WIDTH_PX);
   geometry.MAP_HEIGHT_PAGES = Math.ceil(geometry.MAP_HEIGHT_PX / geometry.SCREEN_HEIGHT_PX);
+});
 
-  return geometry;
-}
+exports.default = geometry;
 
-},{}],21:[function(require,module,exports){
+},{"./game-observer":19}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.OSXFixes = exports.MapExporter = exports.OptionParser = exports.GameObserver = undefined;
+exports.Geometry = exports.OSXFixes = exports.MapExporter = exports.OptionParser = exports.GameObserver = undefined;
 
 var _gameObserver = require('./game-observer');
 
@@ -853,6 +875,10 @@ var _osxFixes = require('./osx-fixes');
 
 var OSXFixes = _interopRequireWildcard(_osxFixes);
 
+var _geometry = require('./geometry');
+
+var _geometry2 = _interopRequireDefault(_geometry);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -861,8 +887,9 @@ exports.GameObserver = _gameObserver2.default;
 exports.OptionParser = OptionParser;
 exports.MapExporter = _mapExporter2.default;
 exports.OSXFixes = OSXFixes;
+exports.Geometry = _geometry2.default;
 
-},{"./game-observer":19,"./map-exporter":22,"./option-parser":23,"./osx-fixes":25}],22:[function(require,module,exports){
+},{"./game-observer":19,"./geometry":20,"./map-exporter":22,"./option-parser":23,"./osx-fixes":25}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -906,15 +933,13 @@ var saveAs = require('browser-filesaver').saveAs;
 //            |                         |
 //            |-------------------------|
 function addScreenshotToCanvas(startX, deltaX, startY, deltaY, targetCanvas) {
-  var geometry = (0, _geometry2.default)();
-
   // The number of pages we're moving the camera from the origin.
-  var tilesX = (startX + deltaX) * geometry.TILES_X;
-  var tilesY = (startY + deltaY) * geometry.TILES_Y;
+  var tilesX = (startX + deltaX) * _geometry2.default.TILES_X;
+  var tilesY = (startY + deltaY) * _geometry2.default.TILES_Y;
 
   // The pixel position in the image into which we're pasting the screenshot.
-  var imageX = deltaX * geometry.SCREEN_WIDTH_PX;
-  var imageY = deltaY * geometry.SCREEN_HEIGHT_PX;
+  var imageX = deltaX * _geometry2.default.SCREEN_WIDTH_PX;
+  var imageY = deltaY * _geometry2.default.SCREEN_HEIGHT_PX;
 
   $gameMap._displayX = tilesX;
   $gameMap._displayY = tilesY;
@@ -961,17 +986,15 @@ function imageSize(startPage, endPage, screenSizePx, mapSizePx) {
 }
 
 function exportMap(startPageX, endPageX, startPageY, endPageY) {
-  var geometry = (0, _geometry2.default)();
-
   // The pixel resolution of the image we are creating.
 
-  startPageX = Math.min(startPageX, geometry.MAP_WIDTH_PAGES);
-  endPageX = Math.min(endPageX, geometry.MAP_WIDTH_PAGES);
-  startPageY = Math.min(startPageY, geometry.MAP_HEIGHT_PAGES);
-  endPageY = Math.min(endPageY, geometry.MAP_HEIGHT_PAGES);
+  startPageX = Math.min(startPageX, _geometry2.default.MAP_WIDTH_PAGES);
+  endPageX = Math.min(endPageX, _geometry2.default.MAP_WIDTH_PAGES);
+  startPageY = Math.min(startPageY, _geometry2.default.MAP_HEIGHT_PAGES);
+  endPageY = Math.min(endPageY, _geometry2.default.MAP_HEIGHT_PAGES);
 
-  var imageX = imageSize(startPageX, endPageX, geometry.SCREEN_WIDTH_PX, geometry.MAP_WIDTH_PX);
-  var imageY = imageSize(startPageY, endPageY, geometry.SCREEN_HEIGHT_PX, geometry.MAP_HEIGHT_PX);
+  var imageX = imageSize(startPageX, endPageX, _geometry2.default.SCREEN_WIDTH_PX, _geometry2.default.MAP_WIDTH_PX);
+  var imageY = imageSize(startPageY, endPageY, _geometry2.default.SCREEN_HEIGHT_PX, _geometry2.default.MAP_HEIGHT_PX);
 
   var previousDisplayX = $gameMap._displayX;
   var previousDisplayY = $gameMap._displayY;
@@ -1007,10 +1030,8 @@ function exportMap(startPageX, endPageX, startPageY, endPageY) {
 }
 
 function exportMapAsync() {
-  var geometry = (0, _geometry2.default)();
-
   requestAnimationFrame(function () {
-    exportMap(0, geometry.MAP_WIDTH_PAGES, 0, geometry.MAP_HEIGHT_PAGES);
+    exportMap(0, _geometry2.default.MAP_WIDTH_PAGES, 0, _geometry2.default.MAP_HEIGHT_PAGES);
   });
 }
 

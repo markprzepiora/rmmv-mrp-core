@@ -356,6 +356,341 @@ if (typeof module !== "undefined" && module.exports) {
 },{}],3:[function(require,module,exports){
 'use strict';
 
+var d        = require('d')
+  , callable = require('es5-ext/object/valid-callable')
+
+  , apply = Function.prototype.apply, call = Function.prototype.call
+  , create = Object.create, defineProperty = Object.defineProperty
+  , defineProperties = Object.defineProperties
+  , hasOwnProperty = Object.prototype.hasOwnProperty
+  , descriptor = { configurable: true, enumerable: false, writable: true }
+
+  , on, once, off, emit, methods, descriptors, base;
+
+on = function (type, listener) {
+	var data;
+
+	callable(listener);
+
+	if (!hasOwnProperty.call(this, '__ee__')) {
+		data = descriptor.value = create(null);
+		defineProperty(this, '__ee__', descriptor);
+		descriptor.value = null;
+	} else {
+		data = this.__ee__;
+	}
+	if (!data[type]) data[type] = listener;
+	else if (typeof data[type] === 'object') data[type].push(listener);
+	else data[type] = [data[type], listener];
+
+	return this;
+};
+
+once = function (type, listener) {
+	var once, self;
+
+	callable(listener);
+	self = this;
+	on.call(this, type, once = function () {
+		off.call(self, type, once);
+		apply.call(listener, this, arguments);
+	});
+
+	once.__eeOnceListener__ = listener;
+	return this;
+};
+
+off = function (type, listener) {
+	var data, listeners, candidate, i;
+
+	callable(listener);
+
+	if (!hasOwnProperty.call(this, '__ee__')) return this;
+	data = this.__ee__;
+	if (!data[type]) return this;
+	listeners = data[type];
+
+	if (typeof listeners === 'object') {
+		for (i = 0; (candidate = listeners[i]); ++i) {
+			if ((candidate === listener) ||
+					(candidate.__eeOnceListener__ === listener)) {
+				if (listeners.length === 2) data[type] = listeners[i ? 0 : 1];
+				else listeners.splice(i, 1);
+			}
+		}
+	} else {
+		if ((listeners === listener) ||
+				(listeners.__eeOnceListener__ === listener)) {
+			delete data[type];
+		}
+	}
+
+	return this;
+};
+
+emit = function (type) {
+	var i, l, listener, listeners, args;
+
+	if (!hasOwnProperty.call(this, '__ee__')) return;
+	listeners = this.__ee__[type];
+	if (!listeners) return;
+
+	if (typeof listeners === 'object') {
+		l = arguments.length;
+		args = new Array(l - 1);
+		for (i = 1; i < l; ++i) args[i - 1] = arguments[i];
+
+		listeners = listeners.slice();
+		for (i = 0; (listener = listeners[i]); ++i) {
+			apply.call(listener, this, args);
+		}
+	} else {
+		switch (arguments.length) {
+		case 1:
+			call.call(listeners, this);
+			break;
+		case 2:
+			call.call(listeners, this, arguments[1]);
+			break;
+		case 3:
+			call.call(listeners, this, arguments[1], arguments[2]);
+			break;
+		default:
+			l = arguments.length;
+			args = new Array(l - 1);
+			for (i = 1; i < l; ++i) {
+				args[i - 1] = arguments[i];
+			}
+			apply.call(listeners, this, args);
+		}
+	}
+};
+
+methods = {
+	on: on,
+	once: once,
+	off: off,
+	emit: emit
+};
+
+descriptors = {
+	on: d(on),
+	once: d(once),
+	off: d(off),
+	emit: d(emit)
+};
+
+base = defineProperties({}, descriptors);
+
+module.exports = exports = function (o) {
+	return (o == null) ? create(base) : defineProperties(Object(o), descriptors);
+};
+exports.methods = methods;
+
+},{"d":4,"es5-ext/object/valid-callable":13}],4:[function(require,module,exports){
+'use strict';
+
+var assign        = require('es5-ext/object/assign')
+  , normalizeOpts = require('es5-ext/object/normalize-options')
+  , isCallable    = require('es5-ext/object/is-callable')
+  , contains      = require('es5-ext/string/#/contains')
+
+  , d;
+
+d = module.exports = function (dscr, value/*, options*/) {
+	var c, e, w, options, desc;
+	if ((arguments.length < 2) || (typeof dscr !== 'string')) {
+		options = value;
+		value = dscr;
+		dscr = null;
+	} else {
+		options = arguments[2];
+	}
+	if (dscr == null) {
+		c = w = true;
+		e = false;
+	} else {
+		c = contains.call(dscr, 'c');
+		e = contains.call(dscr, 'e');
+		w = contains.call(dscr, 'w');
+	}
+
+	desc = { value: value, configurable: c, enumerable: e, writable: w };
+	return !options ? desc : assign(normalizeOpts(options), desc);
+};
+
+d.gs = function (dscr, get, set/*, options*/) {
+	var c, e, options, desc;
+	if (typeof dscr !== 'string') {
+		options = set;
+		set = get;
+		get = dscr;
+		dscr = null;
+	} else {
+		options = arguments[3];
+	}
+	if (get == null) {
+		get = undefined;
+	} else if (!isCallable(get)) {
+		options = get;
+		get = set = undefined;
+	} else if (set == null) {
+		set = undefined;
+	} else if (!isCallable(set)) {
+		options = set;
+		set = undefined;
+	}
+	if (dscr == null) {
+		c = true;
+		e = false;
+	} else {
+		c = contains.call(dscr, 'c');
+		e = contains.call(dscr, 'e');
+	}
+
+	desc = { get: get, set: set, configurable: c, enumerable: e };
+	return !options ? desc : assign(normalizeOpts(options), desc);
+};
+
+},{"es5-ext/object/assign":5,"es5-ext/object/is-callable":8,"es5-ext/object/normalize-options":12,"es5-ext/string/#/contains":15}],5:[function(require,module,exports){
+'use strict';
+
+module.exports = require('./is-implemented')()
+	? Object.assign
+	: require('./shim');
+
+},{"./is-implemented":6,"./shim":7}],6:[function(require,module,exports){
+'use strict';
+
+module.exports = function () {
+	var assign = Object.assign, obj;
+	if (typeof assign !== 'function') return false;
+	obj = { foo: 'raz' };
+	assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
+	return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
+};
+
+},{}],7:[function(require,module,exports){
+'use strict';
+
+var keys  = require('../keys')
+  , value = require('../valid-value')
+
+  , max = Math.max;
+
+module.exports = function (dest, src/*, …srcn*/) {
+	var error, i, l = max(arguments.length, 2), assign;
+	dest = Object(value(dest));
+	assign = function (key) {
+		try { dest[key] = src[key]; } catch (e) {
+			if (!error) error = e;
+		}
+	};
+	for (i = 1; i < l; ++i) {
+		src = arguments[i];
+		keys(src).forEach(assign);
+	}
+	if (error !== undefined) throw error;
+	return dest;
+};
+
+},{"../keys":9,"../valid-value":14}],8:[function(require,module,exports){
+// Deprecated
+
+'use strict';
+
+module.exports = function (obj) { return typeof obj === 'function'; };
+
+},{}],9:[function(require,module,exports){
+'use strict';
+
+module.exports = require('./is-implemented')()
+	? Object.keys
+	: require('./shim');
+
+},{"./is-implemented":10,"./shim":11}],10:[function(require,module,exports){
+'use strict';
+
+module.exports = function () {
+	try {
+		Object.keys('primitive');
+		return true;
+	} catch (e) { return false; }
+};
+
+},{}],11:[function(require,module,exports){
+'use strict';
+
+var keys = Object.keys;
+
+module.exports = function (object) {
+	return keys(object == null ? object : Object(object));
+};
+
+},{}],12:[function(require,module,exports){
+'use strict';
+
+var forEach = Array.prototype.forEach, create = Object.create;
+
+var process = function (src, obj) {
+	var key;
+	for (key in src) obj[key] = src[key];
+};
+
+module.exports = function (options/*, …options*/) {
+	var result = create(null);
+	forEach.call(arguments, function (options) {
+		if (options == null) return;
+		process(Object(options), result);
+	});
+	return result;
+};
+
+},{}],13:[function(require,module,exports){
+'use strict';
+
+module.exports = function (fn) {
+	if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
+	return fn;
+};
+
+},{}],14:[function(require,module,exports){
+'use strict';
+
+module.exports = function (value) {
+	if (value == null) throw new TypeError("Cannot use null or undefined");
+	return value;
+};
+
+},{}],15:[function(require,module,exports){
+'use strict';
+
+module.exports = require('./is-implemented')()
+	? String.prototype.contains
+	: require('./shim');
+
+},{"./is-implemented":16,"./shim":17}],16:[function(require,module,exports){
+'use strict';
+
+var str = 'razdwatrzy';
+
+module.exports = function () {
+	if (typeof str.contains !== 'function') return false;
+	return ((str.contains('dwa') === true) && (str.contains('foo') === false));
+};
+
+},{}],17:[function(require,module,exports){
+'use strict';
+
+var indexOf = String.prototype.indexOf;
+
+module.exports = function (searchString/*, position*/) {
+	return indexOf.call(this, searchString, arguments[1]) > -1;
+};
+
+},{}],18:[function(require,module,exports){
+'use strict';
+
 var _mapExporter = require('./module/map-exporter');
 
 var _mapExporter2 = _interopRequireDefault(_mapExporter);
@@ -404,25 +739,112 @@ if (!window.MRP) {
 
 window.MRP.MapExporter = _mapExporter2.default;
 
-},{"./module/map-exporter":5}],4:[function(require,module,exports){
+},{"./module/map-exporter":21}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = getGeometry;
-function getGeometry() {
-  var geometry = {};
 
-  // The pixel dimensions of each individual tile (i.e., tile size)
-  // In a typical game, these will be 48x48.
-  geometry.TILE_WIDTH = $gameMap.tileWidth();
-  geometry.TILE_HEIGHT = $gameMap.tileHeight();
+var _eventEmitter = require("event-emitter");
 
+var _eventEmitter2 = _interopRequireDefault(_eventEmitter);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// Example:
+//
+//   GameObserver.on('turn.start', function() {
+//     // do whatever...
+//   });
+
+var GameObserver = (0, _eventEmitter2.default)({});
+
+function overridePrototypeMethod(constructor, functionName, fn) {
+  var _super = constructor.prototype[functionName];
+  constructor.prototype[functionName] = function () {
+    return fn.apply(undefined, [_super.bind(this)].concat(Array.prototype.slice.call(arguments)));
+  };
+}
+
+function overrideSingletonMethod(object, functionName, fn) {
+  var _super = object[functionName];
+  object[functionName] = function () {
+    return fn.apply(undefined, [_super.bind(object)].concat(Array.prototype.slice.call(arguments)));
+  };
+}
+
+function eventize(decorator, constructor, functionName, eventName) {
+  decorator(constructor, functionName, function (_super) {
+    GameObserver.emit(eventName + ".before");
+
+    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
+
+    _super.apply(undefined, args);
+    GameObserver.emit(eventName + ".after");
+    GameObserver.emit(eventName);
+  });
+}
+
+function eventizePrototypeMethod(constructor, functionName, eventName) {
+  eventize(overridePrototypeMethod, constructor, functionName, eventName);
+}
+
+function eventizeSingletonMethod(object, functionName, eventName) {
+  eventize(overrideSingletonMethod, object, functionName, eventName);
+}
+
+eventizePrototypeMethod(Game_Troop, 'onBattleStart', 'battle.start');
+eventizePrototypeMethod(Game_Troop, 'onBattleEnd', 'battle.end');
+eventizePrototypeMethod(Game_Map, 'setup', 'map.setup');
+eventizeSingletonMethod(BattleManager, 'endTurn', 'turn.end');
+eventizeSingletonMethod(BattleManager, 'startTurn', 'turn.start');
+eventizeSingletonMethod(SceneManager, 'run', 'game.start');
+
+exports.default = GameObserver;
+
+},{"event-emitter":3}],20:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _gameObserver = require('./game-observer');
+
+var _gameObserver2 = _interopRequireDefault(_gameObserver);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var geometry = {
+  TILE_WIDTH: null,
+  TILE_HEIGHT: null,
+  SCREEN_WIDTH_PX: null,
+  SCREEN_HEIGHT_PX: null,
+  TILES_X: null,
+  TILES_Y: null,
+  MAP_WIDTH_TILES: null,
+  MAP_HEIGHT_TILES: null,
+  MAP_WIDTH_PX: null,
+  MAP_HEIGHT_PX: null,
+  MAP_WIDTH_PAGES: null,
+  MAP_HEIGHT_PAGES: null
+};
+
+_gameObserver2.default.on('game.start', function () {
   // The pixel width and height of the visible screen (i.e. game resolution)
   // In a typical game, this will be 816x624.
   geometry.SCREEN_WIDTH_PX = SceneManager._screenWidth;
   geometry.SCREEN_HEIGHT_PX = SceneManager._screenHeight;
+});
+
+_gameObserver2.default.on('map.setup', function () {
+  // The pixel dimensions of each individual tile (i.e., tile size)
+  // In a typical game, these will be 48x48.
+  geometry.TILE_WIDTH = $gameMap.tileWidth();
+  geometry.TILE_HEIGHT = $gameMap.tileHeight();
 
   // The number of columns and rows of tiles visible on the screen at one time.
   // In a typical game, this will be 17x13.
@@ -443,11 +865,11 @@ function getGeometry() {
   // would have to move the camera in each direction to see the entire map.
   geometry.MAP_WIDTH_PAGES = Math.ceil(geometry.MAP_WIDTH_PX / geometry.SCREEN_WIDTH_PX);
   geometry.MAP_HEIGHT_PAGES = Math.ceil(geometry.MAP_HEIGHT_PX / geometry.SCREEN_HEIGHT_PX);
+});
 
-  return geometry;
-}
+exports.default = geometry;
 
-},{}],5:[function(require,module,exports){
+},{"./game-observer":19}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -491,15 +913,13 @@ var saveAs = require('browser-filesaver').saveAs;
 //            |                         |
 //            |-------------------------|
 function addScreenshotToCanvas(startX, deltaX, startY, deltaY, targetCanvas) {
-  var geometry = (0, _geometry2.default)();
-
   // The number of pages we're moving the camera from the origin.
-  var tilesX = (startX + deltaX) * geometry.TILES_X;
-  var tilesY = (startY + deltaY) * geometry.TILES_Y;
+  var tilesX = (startX + deltaX) * _geometry2.default.TILES_X;
+  var tilesY = (startY + deltaY) * _geometry2.default.TILES_Y;
 
   // The pixel position in the image into which we're pasting the screenshot.
-  var imageX = deltaX * geometry.SCREEN_WIDTH_PX;
-  var imageY = deltaY * geometry.SCREEN_HEIGHT_PX;
+  var imageX = deltaX * _geometry2.default.SCREEN_WIDTH_PX;
+  var imageY = deltaY * _geometry2.default.SCREEN_HEIGHT_PX;
 
   $gameMap._displayX = tilesX;
   $gameMap._displayY = tilesY;
@@ -546,17 +966,15 @@ function imageSize(startPage, endPage, screenSizePx, mapSizePx) {
 }
 
 function exportMap(startPageX, endPageX, startPageY, endPageY) {
-  var geometry = (0, _geometry2.default)();
-
   // The pixel resolution of the image we are creating.
 
-  startPageX = Math.min(startPageX, geometry.MAP_WIDTH_PAGES);
-  endPageX = Math.min(endPageX, geometry.MAP_WIDTH_PAGES);
-  startPageY = Math.min(startPageY, geometry.MAP_HEIGHT_PAGES);
-  endPageY = Math.min(endPageY, geometry.MAP_HEIGHT_PAGES);
+  startPageX = Math.min(startPageX, _geometry2.default.MAP_WIDTH_PAGES);
+  endPageX = Math.min(endPageX, _geometry2.default.MAP_WIDTH_PAGES);
+  startPageY = Math.min(startPageY, _geometry2.default.MAP_HEIGHT_PAGES);
+  endPageY = Math.min(endPageY, _geometry2.default.MAP_HEIGHT_PAGES);
 
-  var imageX = imageSize(startPageX, endPageX, geometry.SCREEN_WIDTH_PX, geometry.MAP_WIDTH_PX);
-  var imageY = imageSize(startPageY, endPageY, geometry.SCREEN_HEIGHT_PX, geometry.MAP_HEIGHT_PX);
+  var imageX = imageSize(startPageX, endPageX, _geometry2.default.SCREEN_WIDTH_PX, _geometry2.default.MAP_WIDTH_PX);
+  var imageY = imageSize(startPageY, endPageY, _geometry2.default.SCREEN_HEIGHT_PX, _geometry2.default.MAP_HEIGHT_PX);
 
   var previousDisplayX = $gameMap._displayX;
   var previousDisplayY = $gameMap._displayY;
@@ -592,11 +1010,9 @@ function exportMap(startPageX, endPageX, startPageY, endPageY) {
 }
 
 function exportMapAsync() {
-  var geometry = (0, _geometry2.default)();
-
   requestAnimationFrame(function () {
-    exportMap(0, geometry.MAP_WIDTH_PAGES, 0, geometry.MAP_HEIGHT_PAGES);
+    exportMap(0, _geometry2.default.MAP_WIDTH_PAGES, 0, _geometry2.default.MAP_HEIGHT_PAGES);
   });
 }
 
-},{"./geometry":4,"blueimp-canvas-to-blob":1,"browser-filesaver":2}]},{},[3]);
+},{"./geometry":20,"blueimp-canvas-to-blob":1,"browser-filesaver":2}]},{},[18]);

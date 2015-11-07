@@ -39,10 +39,11 @@ function eventizeSingletonMethod(object, functionName, eventName) {
   eventize(overrideSingletonMethod, object, functionName, eventName);
 }
 
-eventizePrototypeMethod(Game_Troop,    'onBattleStart', 'battle.start');
-eventizePrototypeMethod(Game_Troop,    'onBattleEnd',   'battle.end');
-eventizeSingletonMethod(BattleManager, 'endTurn',       'turn.end');
-eventizeSingletonMethod(BattleManager, 'startTurn',     'turn.start');
-eventizeSingletonMethod(SceneManager,  'run',           'game.start');
+eventizePrototypeMethod(Game_Troop,     'onBattleStart',  'battle.start');
+eventizePrototypeMethod(Game_Troop,     'onBattleEnd',    'battle.end');
+eventizePrototypeMethod(Game_Map,       'setup',          'map.setup');
+eventizeSingletonMethod(BattleManager,  'endTurn',        'turn.end');
+eventizeSingletonMethod(BattleManager,  'startTurn',      'turn.start');
+eventizeSingletonMethod(SceneManager,   'run',            'game.start');
 
 export default GameObserver;

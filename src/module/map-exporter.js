@@ -1,7 +1,7 @@
 require('blueimp-canvas-to-blob');
 var saveAs = require('browser-filesaver').saveAs;
 
-import getGeometry from './geometry';
+import geometry from './geometry';
 
 // startX, deltaX, startY, deltaY are measured in *pages*.
 //
@@ -30,8 +30,6 @@ import getGeometry from './geometry';
 //            |                         |
 //            |-------------------------|
 function addScreenshotToCanvas(startX, deltaX, startY, deltaY, targetCanvas) {
-  const geometry = getGeometry();
-
   // The number of pages we're moving the camera from the origin.
   const tilesX = (startX + deltaX) * geometry.TILES_X;
   const tilesY = (startY + deltaY) * geometry.TILES_Y;
@@ -86,8 +84,6 @@ function imageSize(startPage, endPage, screenSizePx, mapSizePx) {
 }
 
 function exportMap(startPageX, endPageX, startPageY, endPageY) {
-  const geometry = getGeometry();
-
   // The pixel resolution of the image we are creating.
 
   startPageX = Math.min(startPageX, geometry.MAP_WIDTH_PAGES);
@@ -132,8 +128,6 @@ function exportMap(startPageX, endPageX, startPageY, endPageY) {
 }
 
 export default function exportMapAsync(...args) {
-  const geometry = getGeometry();
-
   requestAnimationFrame(function() {
     exportMap(0, geometry.MAP_WIDTH_PAGES, 0, geometry.MAP_HEIGHT_PAGES);
   });
