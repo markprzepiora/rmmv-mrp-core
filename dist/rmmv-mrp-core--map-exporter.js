@@ -367,7 +367,7 @@ if (!window.MRP) {
 } //=============================================================================
 // RPG Maker MV MRP Map Exporter
 // rmmv-mrp-core--map-exporter.js
-// Version: 0.0.7
+// Version: 0.0.8
 //=============================================================================
 
 //=============================================================================
@@ -410,7 +410,7 @@ window.MRP.MapExporter = _mapExporter2.default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = exportMap;
+exports.default = exportMapAsync;
 require('blueimp-canvas-to-blob');
 var saveAs = require('browser-filesaver').saveAs;
 
@@ -434,7 +434,8 @@ function addScreenshotToCanvas(x, y, targetCanvas) {
 
   $gameMap._displayX = tilesX;
   $gameMap._displayY = tilesY;
-  SceneManager.update();
+  SceneManager.updateScene();
+  SceneManager.renderScene();
 
   var canvas = SceneManager.snap()._canvas;
   targetCanvas.getContext('2d').drawImage(canvas, screenX, screenY);
@@ -446,6 +447,9 @@ function exportMap() {
   var imageY = $dataMap.height * geometry.TILE_HEIGHT;
   var pagesX = Math.ceil(imageX / geometry.SCREEN_WIDTH_PX);
   var pagesY = Math.ceil(imageY / geometry.SCREEN_HEIGHT_PX);
+
+  var previousDisplayX = $gameMap._displayX;
+  var previousDisplayY = $gameMap._displayY;
 
   // This canvas will hold the entire, big-ass image.
   var canvas = document.createElement('canvas');
@@ -473,6 +477,13 @@ function exportMap() {
   canvas.toBlob(function (blob) {
     saveAs(blob, "map.png");
   });
+
+  $gameMap._displayY = previousDisplayY;
+  $gameMap._displayX = previousDisplayX;
+}
+
+function exportMapAsync() {
+  requestAnimationFrame(exportMap);
 }
 
 },{"blueimp-canvas-to-blob":1,"browser-filesaver":2}]},{},[3]);

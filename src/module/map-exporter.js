@@ -21,18 +21,22 @@ function addScreenshotToCanvas(x, y, targetCanvas) {
 
   $gameMap._displayX = tilesX;
   $gameMap._displayY = tilesY;
-  SceneManager.update();
+  SceneManager.updateScene();
+  SceneManager.renderScene();
   
   var canvas = SceneManager.snap()._canvas;
   targetCanvas.getContext('2d').drawImage(canvas, screenX, screenY);
 }
 
-export default function exportMap() {
+function exportMap() {
   const geometry = getGeometry();
   const imageX   = $dataMap.width * geometry.TILE_WIDTH;
   const imageY   = $dataMap.height * geometry.TILE_HEIGHT;
   const pagesX   = Math.ceil(imageX / geometry.SCREEN_WIDTH_PX);
   const pagesY   = Math.ceil(imageY / geometry.SCREEN_HEIGHT_PX);
+
+  const previousDisplayX = $gameMap._displayX;
+  const previousDisplayY = $gameMap._displayY;
 
   // This canvas will hold the entire, big-ass image.
   const canvas  = document.createElement('canvas');
@@ -60,4 +64,11 @@ export default function exportMap() {
   canvas.toBlob(function(blob) {
     saveAs(blob, "map.png");
   });
+
+  $gameMap._displayY = previousDisplayY;
+  $gameMap._displayX = previousDisplayX;
+}
+
+export default function exportMapAsync() {
+  requestAnimationFrame(exportMap);
 }
