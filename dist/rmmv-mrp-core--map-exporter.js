@@ -823,8 +823,8 @@ var geometry = {
   TILE_HEIGHT: null,
   SCREEN_WIDTH_PX: null,
   SCREEN_HEIGHT_PX: null,
-  TILES_X: null,
-  TILES_Y: null,
+  SCREEN_WIDTH_TILES: null,
+  SCREEN_HEIGHT_TILES: null,
   MAP_WIDTH_TILES: null,
   MAP_HEIGHT_TILES: null,
   MAP_WIDTH_PX: null,
@@ -850,8 +850,8 @@ _gameObserver2.default.on('map.setup', function () {
   // In a typical game, this will be 17x13.
   //
   // Note that these are *not guaranteed to be whole numbers*.
-  geometry.TILES_X = Math.floor(geometry.SCREEN_WIDTH_PX / geometry.TILE_WIDTH);
-  geometry.TILES_Y = Math.floor(geometry.SCREEN_HEIGHT_PX / geometry.TILE_HEIGHT);
+  geometry.SCREEN_WIDTH_TILES = Math.floor(geometry.SCREEN_WIDTH_PX / geometry.TILE_WIDTH);
+  geometry.SCREEN_HEIGHT_TILES = Math.floor(geometry.SCREEN_HEIGHT_PX / geometry.TILE_HEIGHT);
 
   // The map size measured in tiles.
   geometry.MAP_WIDTH_TILES = $dataMap.width;
@@ -914,8 +914,8 @@ var saveAs = require('browser-filesaver').saveAs;
 //            |-------------------------|
 function addScreenshotToCanvas(startX, deltaX, startY, deltaY, targetCanvas) {
   // The number of pages we're moving the camera from the origin.
-  var tilesX = (startX + deltaX) * _geometry2.default.TILES_X;
-  var tilesY = (startY + deltaY) * _geometry2.default.TILES_Y;
+  var tilesX = (startX + deltaX) * _geometry2.default.SCREEN_WIDTH_TILES;
+  var tilesY = (startY + deltaY) * _geometry2.default.SCREEN_HEIGHT_TILES;
 
   // The pixel position in the image into which we're pasting the screenshot.
   var imageX = deltaX * _geometry2.default.SCREEN_WIDTH_PX;

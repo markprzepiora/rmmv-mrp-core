@@ -5,8 +5,8 @@ const geometry = {
   TILE_HEIGHT:      null,
   SCREEN_WIDTH_PX:  null,
   SCREEN_HEIGHT_PX: null,
-  TILES_X:          null,
-  TILES_Y:          null,
+  SCREEN_WIDTH_TILES:          null,
+  SCREEN_HEIGHT_TILES:          null,
   MAP_WIDTH_TILES:  null,
   MAP_HEIGHT_TILES: null,
   MAP_WIDTH_PX:     null,
@@ -32,8 +32,8 @@ GameObserver.on('map.setup', function() {
   // In a typical game, this will be 17x13.
   //
   // Note that these are *not guaranteed to be whole numbers*.
-  geometry.TILES_X = Math.floor(geometry.SCREEN_WIDTH_PX / geometry.TILE_WIDTH);
-  geometry.TILES_Y = Math.floor(geometry.SCREEN_HEIGHT_PX / geometry.TILE_HEIGHT);
+  geometry.SCREEN_WIDTH_TILES = Math.floor(geometry.SCREEN_WIDTH_PX / geometry.TILE_WIDTH);
+  geometry.SCREEN_HEIGHT_TILES = Math.floor(geometry.SCREEN_HEIGHT_PX / geometry.TILE_HEIGHT);
 
   // The map size measured in tiles.
   geometry.MAP_WIDTH_TILES  = $dataMap.width;

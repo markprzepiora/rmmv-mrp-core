@@ -31,8 +31,8 @@ import geometry from './geometry';
 //            |-------------------------|
 function addScreenshotToCanvas(startX, deltaX, startY, deltaY, targetCanvas) {
   // The number of pages we're moving the camera from the origin.
-  const tilesX = (startX + deltaX) * geometry.TILES_X;
-  const tilesY = (startY + deltaY) * geometry.TILES_Y;
+  const tilesX = (startX + deltaX) * geometry.SCREEN_WIDTH_TILES;
+  const tilesY = (startY + deltaY) * geometry.SCREEN_HEIGHT_TILES;
 
   // The pixel position in the image into which we're pasting the screenshot.
   const imageX = deltaX * geometry.SCREEN_WIDTH_PX;
