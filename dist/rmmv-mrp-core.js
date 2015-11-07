@@ -721,7 +721,7 @@ MRP.OSXFixes.InstallAllFixes(); //==============================================
 
 window.MRP = MRP;
 
-},{"./module/index":20}],19:[function(require,module,exports){
+},{"./module/index":21}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -787,6 +787,49 @@ eventizeSingletonMethod(SceneManager, 'run', 'game.start');
 exports.default = GameObserver;
 
 },{"event-emitter":3}],20:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = getGeometry;
+function getGeometry() {
+  var geometry = {};
+
+  // The pixel dimensions of each individual tile (i.e., tile size)
+  // In a typical game, these will be 48x48.
+  geometry.TILE_WIDTH = $gameMap.tileWidth();
+  geometry.TILE_HEIGHT = $gameMap.tileHeight();
+
+  // The pixel width and height of the visible screen (i.e. game resolution)
+  // In a typical game, this will be 816x624.
+  geometry.SCREEN_WIDTH_PX = SceneManager._screenWidth;
+  geometry.SCREEN_HEIGHT_PX = SceneManager._screenHeight;
+
+  // The number of columns and rows of tiles visible on the screen at one time.
+  // In a typical game, this will be 17x13.
+  //
+  // Note that these are *not guaranteed to be whole numbers*.
+  geometry.TILES_X = Math.floor(geometry.SCREEN_WIDTH_PX / geometry.TILE_WIDTH);
+  geometry.TILES_Y = Math.floor(geometry.SCREEN_HEIGHT_PX / geometry.TILE_HEIGHT);
+
+  // The map size measured in tiles.
+  geometry.MAP_WIDTH_TILES = $dataMap.width;
+  geometry.MAP_HEIGHT_TILES = $dataMap.height;
+
+  // The map size measured in pixels.
+  geometry.MAP_WIDTH_PX = geometry.MAP_WIDTH_TILES * geometry.TILE_WIDTH;
+  geometry.MAP_HEIGHT_PX = geometry.MAP_HEIGHT_TILES * geometry.TILE_HEIGHT;
+
+  // The map size measured in `pages`, that is the whole number of times we
+  // would have to move the camera in each direction to see the entire map.
+  geometry.MAP_WIDTH_PAGES = Math.ceil(geometry.MAP_WIDTH_PX / geometry.SCREEN_WIDTH_PX);
+  geometry.MAP_HEIGHT_PAGES = Math.ceil(geometry.MAP_HEIGHT_PX / geometry.SCREEN_HEIGHT_PX);
+
+  return geometry;
+}
+
+},{}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -819,33 +862,59 @@ exports.OptionParser = OptionParser;
 exports.MapExporter = _mapExporter2.default;
 exports.OSXFixes = OSXFixes;
 
-},{"./game-observer":19,"./map-exporter":21,"./option-parser":22,"./osx-fixes":24}],21:[function(require,module,exports){
+},{"./game-observer":19,"./map-exporter":22,"./option-parser":23,"./osx-fixes":25}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = exportMapAsync;
+
+var _geometry = require('./geometry');
+
+var _geometry2 = _interopRequireDefault(_geometry);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 require('blueimp-canvas-to-blob');
 var saveAs = require('browser-filesaver').saveAs;
 
-function getGeometry() {
-  return {
-    TILE_WIDTH: $gameMap.tileWidth(),
-    TILE_HEIGHT: $gameMap.tileHeight(),
-    TILES_X: Math.floor(SceneManager._screenWidth / $gameMap.tileWidth()),
-    TILES_Y: Math.floor(SceneManager._screenHeight / $gameMap.tileHeight()),
-    SCREEN_WIDTH_PX: SceneManager._screenWidth,
-    SCREEN_HEIGHT_PX: SceneManager._screenHeight
-  };
-}
+// startX, deltaX, startY, deltaY are measured in *pages*.
+//
+// We're taking a screenshot at page startX + deltaX and startY + delta Y, but
+// we're pasting it into an image where its zero coordinates are startX and
+// startY.
+//
+// Imagine the picture below. The outside box represents the entire map. The
+// dotted box represents the big image we're generating. The inner solid box
+// represents the current screenshot we're taking and pasting inside of the
+// dotted box.
+//
+//            startX↓      ↓startX + deltaX
+//
+//            |-------------------------|
+//            |                         |
+//            |                         |
+//   startY→  |     .......--------     |
+//            |     .      |      |     |
+//            |     .      |      |     |
+//            |     .      --------     | ← startY + deltaY
+//            |     .             .     |
+//            |     .             .     |
+//            |     ...............     |
+//            |                         |
+//            |                         |
+//            |-------------------------|
+function addScreenshotToCanvas(startX, deltaX, startY, deltaY, targetCanvas) {
+  var geometry = (0, _geometry2.default)();
 
-function addScreenshotToCanvas(x, y, targetCanvas) {
-  var geometry = getGeometry();
-  var tilesX = x * geometry.TILES_X;
-  var tilesY = y * geometry.TILES_Y;
-  var screenX = tilesX * geometry.TILE_WIDTH;
-  var screenY = tilesY * geometry.TILE_HEIGHT;
+  // The number of pages we're moving the camera from the origin.
+  var tilesX = (startX + deltaX) * geometry.TILES_X;
+  var tilesY = (startY + deltaY) * geometry.TILES_Y;
+
+  // The pixel position in the image into which we're pasting the screenshot.
+  var imageX = deltaX * geometry.SCREEN_WIDTH_PX;
+  var imageY = deltaY * geometry.SCREEN_HEIGHT_PX;
 
   $gameMap._displayX = tilesX;
   $gameMap._displayY = tilesY;
@@ -853,15 +922,56 @@ function addScreenshotToCanvas(x, y, targetCanvas) {
   SceneManager.renderScene();
 
   var canvas = SceneManager.snap()._canvas;
-  targetCanvas.getContext('2d').drawImage(canvas, screenX, screenY);
+  targetCanvas.getContext('2d').drawImage(canvas, imageX, imageY);
 }
 
-function exportMap() {
-  var geometry = getGeometry();
-  var imageX = $dataMap.width * geometry.TILE_WIDTH;
-  var imageY = $dataMap.height * geometry.TILE_HEIGHT;
-  var pagesX = Math.ceil(imageX / geometry.SCREEN_WIDTH_PX);
-  var pagesY = Math.ceil(imageY / geometry.SCREEN_HEIGHT_PX);
+// Includes pages [startPage, startPage + 1, ..., endPage - 1]
+function imageSize(startPage, endPage, screenSizePx, mapSizePx) {
+  // Example:
+  //   startPage    = 1
+  //   endPage      = 2
+  //   screenSizePx = 1000
+  //   mapSizePx    = 1800
+
+  // totalPages = ceil(1.8) = 2
+  var totalPages = Math.ceil(mapSizePx / screenSizePx);
+
+  // startPage = 1
+  startPage = Math.min(startPage, totalPages);
+
+  // startPage = 2
+  endPage = Math.min(endPage, totalPages);
+
+  // 1 >= 2 ?
+  if (startPage >= endPage) {
+    throw 'tried to compute a width or height of size 0: ' + JSON.stringify([].slice.apply(arguments));
+  }
+
+  // 2 === 2 ?
+  if (endPage === totalPages) {
+    var size =
+    // 0 + (1800 % 1000) || 1000
+    // = 800
+    (endPage - startPage - 1) * screenSizePx + (mapSizePx % screenSizePx || screenSizePx);
+  } else {
+    var size = (endPage - startPage) * screenSizePx;
+  }
+
+  return size;
+}
+
+function exportMap(startPageX, endPageX, startPageY, endPageY) {
+  var geometry = (0, _geometry2.default)();
+
+  // The pixel resolution of the image we are creating.
+
+  startPageX = Math.min(startPageX, geometry.MAP_WIDTH_PAGES);
+  endPageX = Math.min(endPageX, geometry.MAP_WIDTH_PAGES);
+  startPageY = Math.min(startPageY, geometry.MAP_HEIGHT_PAGES);
+  endPageY = Math.min(endPageY, geometry.MAP_HEIGHT_PAGES);
+
+  var imageX = imageSize(startPageX, endPageX, geometry.SCREEN_WIDTH_PX, geometry.MAP_WIDTH_PX);
+  var imageY = imageSize(startPageY, endPageY, geometry.SCREEN_HEIGHT_PX, geometry.MAP_HEIGHT_PX);
 
   var previousDisplayX = $gameMap._displayX;
   var previousDisplayY = $gameMap._displayY;
@@ -877,11 +987,10 @@ function exportMap() {
 
   // Take a screenshot of each portion of the map and layer them onto the big
   // canvas.
-  var x = 0;
-  var y = 0;
-  for (x = 0; x < pagesX; x++) {
-    for (y = 0; y < pagesY; y++) {
-      addScreenshotToCanvas(x, y, canvas);
+  var x, y;
+  for (x = startPageX; x < endPageX; x++) {
+    for (y = startPageY; y < endPageY; y++) {
+      addScreenshotToCanvas(startPageX, x - startPageX, startPageY, y - startPageY, canvas);
     }
   }
 
@@ -898,10 +1007,14 @@ function exportMap() {
 }
 
 function exportMapAsync() {
-  requestAnimationFrame(exportMap);
+  var geometry = (0, _geometry2.default)();
+
+  requestAnimationFrame(function () {
+    exportMap(0, geometry.MAP_WIDTH_PAGES, 0, geometry.MAP_HEIGHT_PAGES);
+  });
 }
 
-},{"blueimp-canvas-to-blob":1,"browser-filesaver":2}],22:[function(require,module,exports){
+},{"./geometry":20,"blueimp-canvas-to-blob":1,"browser-filesaver":2}],23:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1246,7 +1359,7 @@ function extractAllOfType(str, type) {
   });
 }
 
-},{"./lexer-utils":23}],23:[function(require,module,exports){
+},{"./lexer-utils":24}],24:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1570,7 +1683,7 @@ function Lexer(_lexer) {
   };
 }
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
