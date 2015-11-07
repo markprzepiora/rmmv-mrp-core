@@ -697,7 +697,7 @@ var MRP = _interopRequireWildcard(_index);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-window.MRP = MRP; //=============================================================================
+MRP.OSXFixes.InstallAllFixes(); //=============================================================================
 // RPG Maker MV MRP Core Module
 // rmmv-mrp-core.js
 // Version: 0.0.8
@@ -719,14 +719,16 @@ window.MRP = MRP; //============================================================
  */
 //=============================================================================
 
+window.MRP = MRP;
+
 },{"./module/index":20}],19:[function(require,module,exports){
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _eventEmitter = require('event-emitter');
+var _eventEmitter = require("event-emitter");
 
 var _eventEmitter2 = _interopRequireDefault(_eventEmitter);
 
@@ -734,37 +736,55 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 // Example:
 //
-//   BattleObserver.on('turn.start', function() {
+//   GameObserver.on('turn.start', function() {
 //     // do whatever...
 //   });
 
-var BattleObserver = (0, _eventEmitter2.default)({});
+var GameObserver = (0, _eventEmitter2.default)({});
 
-var _onBattleEnd = Game_Troop.prototype.onBattleEnd;
-Game_Troop.prototype.onBattleEnd = function () {
-  BattleObserver.emit('battle.end');
-  _onBattleEnd.call(this);
-};
+function overridePrototypeMethod(constructor, functionName, fn) {
+  var _super = constructor.prototype[functionName];
+  constructor.prototype[functionName] = function () {
+    return fn.apply(undefined, [_super.bind(this)].concat(Array.prototype.slice.call(arguments)));
+  };
+}
 
-var _onBattleStart = Game_Troop.prototype.onBattleStart;
-Game_Troop.prototype.onBattleStart = function () {
-  BattleObserver.emit('battle.start');
-  _onBattleStart.call(this);
-};
+function overrideSingletonMethod(object, functionName, fn) {
+  var _super = object[functionName];
+  object[functionName] = function () {
+    return fn.apply(undefined, [_super.bind(object)].concat(Array.prototype.slice.call(arguments)));
+  };
+}
 
-var _endTurn = BattleManager.endTurn.bind(BattleManager);
-BattleManager.endTurn = function () {
-  _endTurn();
-  BattleObserver.emit('turn.end');
-};
+function eventize(decorator, constructor, functionName, eventName) {
+  decorator(constructor, functionName, function (_super) {
+    GameObserver.emit(eventName + ".before");
 
-var _startTurn = BattleManager.startTurn.bind(BattleManager);
-BattleManager.startTurn = function () {
-  _startTurn();
-  BattleObserver.emit('turn.start');
-};
+    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
 
-exports.default = BattleObserver;
+    _super.apply(undefined, args);
+    GameObserver.emit(eventName + ".after");
+    GameObserver.emit(eventName);
+  });
+}
+
+function eventizePrototypeMethod(constructor, functionName, eventName) {
+  eventize(overridePrototypeMethod, constructor, functionName, eventName);
+}
+
+function eventizeSingletonMethod(object, functionName, eventName) {
+  eventize(overrideSingletonMethod, object, functionName, eventName);
+}
+
+eventizePrototypeMethod(Game_Troop, 'onBattleStart', 'battle.start');
+eventizePrototypeMethod(Game_Troop, 'onBattleEnd', 'battle.end');
+eventizeSingletonMethod(BattleManager, 'endTurn', 'turn.end');
+eventizeSingletonMethod(BattleManager, 'startTurn', 'turn.start');
+eventizeSingletonMethod(SceneManager, 'run', 'game.start');
+
+exports.default = GameObserver;
 
 },{"event-emitter":3}],20:[function(require,module,exports){
 'use strict';
@@ -772,11 +792,11 @@ exports.default = BattleObserver;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.MapExporter = exports.OptionParser = exports.BattleObserver = undefined;
+exports.OSXFixes = exports.MapExporter = exports.OptionParser = exports.GameObserver = undefined;
 
-var _battleObserver = require('./battle-observer');
+var _gameObserver = require('./game-observer');
 
-var _battleObserver2 = _interopRequireDefault(_battleObserver);
+var _gameObserver2 = _interopRequireDefault(_gameObserver);
 
 var _optionParser = require('./option-parser');
 
@@ -786,15 +806,20 @@ var _mapExporter = require('./map-exporter');
 
 var _mapExporter2 = _interopRequireDefault(_mapExporter);
 
+var _osxFixes = require('./osx-fixes');
+
+var OSXFixes = _interopRequireWildcard(_osxFixes);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.BattleObserver = _battleObserver2.default;
+exports.GameObserver = _gameObserver2.default;
 exports.OptionParser = OptionParser;
 exports.MapExporter = _mapExporter2.default;
+exports.OSXFixes = OSXFixes;
 
-},{"./battle-observer":19,"./map-exporter":21,"./option-parser":22}],21:[function(require,module,exports){
+},{"./game-observer":19,"./map-exporter":21,"./option-parser":22,"./osx-fixes":24}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1545,4 +1570,71 @@ function Lexer(_lexer) {
   };
 }
 
-},{}]},{},[18]);
+},{}],24:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.FixOSXCopyPaste = FixOSXCopyPaste;
+exports.MoveDevToolsWindow = MoveDevToolsWindow;
+exports.InstallAllFixes = InstallAllFixes;
+
+var _gameObserver = require('./game-observer');
+
+var _gameObserver2 = _interopRequireDefault(_gameObserver);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var isNwJS = !!(window.require || "").toString().match('nw.gui');
+
+// Only require the nw.gui module if we are actually running inside nw.js.
+var gui = isNwJS ? require('nw.gui') : null;
+var os = isNwJS ? require('os') : null;
+
+// Are we inside nw.js, and are we running OSX?
+var isOSX = os && os.platform() === "darwin";
+
+function FixOSXCopyPaste() {
+  if (isOSX) {
+    var win = gui.Window.get();
+    var nativeMenuBar = new gui.Menu({ type: "menubar" });
+    nativeMenuBar.createMacBuiltin("Game");
+    win.menu = nativeMenuBar;
+  }
+}
+
+function _moveDevToolsWindow() {
+  if (isOSX) {
+    var dev = gui.Window.get().showDevTools();
+    dev.x = 50;
+    dev.y = 50;
+  }
+}
+
+function MoveDevToolsWindow() {
+  if (isOSX) {
+    var win = gui.Window.get();
+
+    // YanFly's plugin sets the devtools position to 0,0 when the game starts.
+    // So here we do it afterwards.
+    _gameObserver2.default.on('game.start.after', function () {
+      // If the devtools are already opened, move them immediately.
+      if (win.isDevToolsOpen()) {
+        _moveDevToolsWindow();
+      }
+
+      // Otherwise, move the window when the user opens it.
+      win.once('devtools-opened', _moveDevToolsWindow);
+    });
+  }
+}
+
+function InstallAllFixes() {
+  if (isOSX) {
+    FixOSXCopyPaste();
+    MoveDevToolsWindow();
+  }
+}
+
+},{"./game-observer":19,"nw.gui":undefined,"os":undefined}]},{},[18]);

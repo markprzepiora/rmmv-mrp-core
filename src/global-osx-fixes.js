@@ -1,13 +1,12 @@
 //=============================================================================
-// RPG Maker MV MRP Core Module
-// rmmv-mrp-core.js
+// RPG Maker MV MRP Core - Fix Copy/Paste and stuck Dev Tools window on OSX
+// rmmv-mrp-core--osx-fixes.js
 // Version: 0.0.8
 //=============================================================================
 
 //=============================================================================
 /*:
- * @plugindesc A collection of utilities for RPG Maker MV game designers and
- * plugin writers.
+ * @plugindesc Fix Copy/Paste and stuck Dev Tools window on OSX
  * @author Mark Przepiora
  *
  * @help
@@ -15,13 +14,21 @@
  * Instructions
  * ============================================================================
  *
+ * No configuration or usage required. If you are on OSX, this plugin will
+ * re-enable copy/paste inside the Dev Tools window, and also move it over down
+ * and to the right a little bit so that its menu bar becomes visible.
+ *
  * Please look on GitHub for complete instructions:
  * https://github.com/markprzepiora/rmmv-mrp-core
  */
 //=============================================================================
 
-import * as MRP from './module/index';
+import * as OSXFixes from './module/osx-fixes';
 
-MRP.OSXFixes.InstallAllFixes();
+if (!window.MRP) {
+  window.MRP = {};
+}
 
-window.MRP = MRP;
+OSXFixes.InstallAllFixes();
+
+window.MRP.OSXFixes = OSXFixes;

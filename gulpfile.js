@@ -20,6 +20,11 @@ var files = [
     extensions: ['.js'],
     destination: './dist'
   }, {
+    input: ['./src/global-osx-fixes.js'],
+    output: 'rmmv-mrp-core--osx-fixes.js',
+    extensions: ['.js'],
+    destination: './dist'
+  }, {
     input: ['./test/index.js'],
     output: 'test.js',
     extensions: ['.js'],
@@ -36,7 +41,10 @@ var createBundle = function(options, callback) {
     cache: {}
   };
 
-  var bundler = browserify(opts).transform("babelify");
+  var bundler = browserify(opts)
+    .exclude('nw.gui')
+    .exclude('os')
+    .transform("babelify");
 
   if (global.isWatching) {
     bundler = watchify(bundler);
