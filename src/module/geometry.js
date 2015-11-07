@@ -3,16 +3,16 @@ import GameObserver from './game-observer';
 const geometry = {
   TILE_WIDTH_PX:       null,
   TILE_HEIGHT_PX:      null,
-  SCREEN_WIDTH_PX:  null,
-  SCREEN_HEIGHT_PX: null,
-  SCREEN_WIDTH_TILES:          null,
-  SCREEN_HEIGHT_TILES:          null,
-  MAP_WIDTH_TILES:  null,
-  MAP_HEIGHT_TILES: null,
-  MAP_WIDTH_PX:     null,
-  MAP_HEIGHT_PX:    null,
-  MAP_WIDTH_PAGES:  null,
-  MAP_HEIGHT_PAGES: null,
+  SCREEN_WIDTH_PX:     null,
+  SCREEN_HEIGHT_PX:    null,
+  SCREEN_WIDTH_TILES:  null,
+  SCREEN_HEIGHT_TILES: null,
+  MAP_WIDTH_TILES:     null,
+  MAP_HEIGHT_TILES:    null,
+  MAP_WIDTH_PX:        null,
+  MAP_HEIGHT_PX:       null,
+  MAP_WIDTH_PAGES:     null,
+  MAP_HEIGHT_PAGES:    null,
 };
 
 GameObserver.on('game.start', function() {
