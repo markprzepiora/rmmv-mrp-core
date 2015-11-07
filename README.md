@@ -142,15 +142,15 @@ Like `extractAll`, but returns the first match or `null` if none exist.
 
 Like `extractAllOfType`, but returns the first match or `null` if none exist.
 
-### `MRP.BattleObserver`
+### `MRP.GameObserver`
 
-A simple event-emitter interface for listening to battle events.
+A simple event-emitter interface for listening to game events.
 
 Example:
 
 ```js
-MRP.BattleObserver.on('turn.start', function() {
-  // do whatever...
+MRP.GameObserver.on('turn.start', function() {
+  // do whatever at the start of each battle turn.
 });
 ```
 
@@ -160,7 +160,24 @@ Implemented events:
 - `turn.end`
 - `battle.start`
 - `battle.end`
+- `game.start`
 - More soon.
+
+Each event has a `.before` and `.after` variant. (The `.after` variant is
+simply an alias for the bare event name.) The `.before` variant fires *before*
+the native function does, and the `.after` variant fires *after* the native
+function does. Depending on what you're hooking into, this difference may be
+significant.
+
+```js
+MRP.GameObserver.on('turn.start.before', function() {
+  // Will fire before startTurn.startTurn does.
+});
+
+MRP.GameObserver.on('turn.start.after', function() {
+  // Will fire after startTurn.startTurn does.
+});
+```
 
 ## `MRP.MapExporter`
 
