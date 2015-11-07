@@ -801,8 +801,8 @@ var _gameObserver2 = _interopRequireDefault(_gameObserver);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var geometry = {
-  TILE_WIDTH: null,
-  TILE_HEIGHT: null,
+  TILE_WIDTH_PX: null,
+  TILE_HEIGHT_PX: null,
   SCREEN_WIDTH_PX: null,
   SCREEN_HEIGHT_PX: null,
   SCREEN_WIDTH_TILES: null,
@@ -825,23 +825,23 @@ _gameObserver2.default.on('game.start', function () {
 _gameObserver2.default.on('map.setup', function () {
   // The pixel dimensions of each individual tile (i.e., tile size)
   // In a typical game, these will be 48x48.
-  geometry.TILE_WIDTH = $gameMap.tileWidth();
-  geometry.TILE_HEIGHT = $gameMap.tileHeight();
+  geometry.TILE_WIDTH_PX = $gameMap.tileWidth();
+  geometry.TILE_HEIGHT_PX = $gameMap.tileHeight();
 
   // The number of columns and rows of tiles visible on the screen at one time.
   // In a typical game, this will be 17x13.
   //
   // Note that these are *not guaranteed to be whole numbers*.
-  geometry.SCREEN_WIDTH_TILES = Math.floor(geometry.SCREEN_WIDTH_PX / geometry.TILE_WIDTH);
-  geometry.SCREEN_HEIGHT_TILES = Math.floor(geometry.SCREEN_HEIGHT_PX / geometry.TILE_HEIGHT);
+  geometry.SCREEN_WIDTH_TILES = Math.floor(geometry.SCREEN_WIDTH_PX / geometry.TILE_WIDTH_PX);
+  geometry.SCREEN_HEIGHT_TILES = Math.floor(geometry.SCREEN_HEIGHT_PX / geometry.TILE_HEIGHT_PX);
 
   // The map size measured in tiles.
   geometry.MAP_WIDTH_TILES = $dataMap.width;
   geometry.MAP_HEIGHT_TILES = $dataMap.height;
 
   // The map size measured in pixels.
-  geometry.MAP_WIDTH_PX = geometry.MAP_WIDTH_TILES * geometry.TILE_WIDTH;
-  geometry.MAP_HEIGHT_PX = geometry.MAP_HEIGHT_TILES * geometry.TILE_HEIGHT;
+  geometry.MAP_WIDTH_PX = geometry.MAP_WIDTH_TILES * geometry.TILE_WIDTH_PX;
+  geometry.MAP_HEIGHT_PX = geometry.MAP_HEIGHT_TILES * geometry.TILE_HEIGHT_PX;
 
   // The map size measured in `pages`, that is the whole number of times we
   // would have to move the camera in each direction to see the entire map.
