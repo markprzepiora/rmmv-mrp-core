@@ -584,7 +584,8 @@ function screenshotName(basename, suffix) {
     basename = $dataMapInfos[$gameMap._mapId].name;
   }
 
-  var timestamp = new Date().toISOString();
+  var timestamp = new Date().toISOString().replace(/:/g, '-');
+  basename = basename.replace(/[^a-zA-Z0-9\s]/g, '');
 
   return timestamp + ' ' + basename + ' ' + suffix + '.png';
 }
