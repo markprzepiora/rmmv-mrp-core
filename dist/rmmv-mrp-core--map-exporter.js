@@ -730,7 +730,7 @@ function exportMapAsync() {
   var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
   var _ref$pagesPerImage = _ref.pagesPerImage;
-  var pagesPerImage = _ref$pagesPerImage === undefined ? 6 : _ref$pagesPerImage;
+  var pagesPerImage = _ref$pagesPerImage === undefined ? 16 : _ref$pagesPerImage;
   var _ref$basename = _ref.basename;
   var basename = _ref$basename === undefined ? null : _ref$basename;
 

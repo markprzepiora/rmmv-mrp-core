@@ -186,7 +186,7 @@ function exportMap(pagesPerImage, basename) {
   } while (x + pagesPerImage <= geometry.MAP_WIDTH_PAGES);
 }
 
-export default function exportMapAsync({ pagesPerImage = 6, basename = null } = {}) {
+export default function exportMapAsync({ pagesPerImage = 16, basename = null } = {}) {
   if (pagesPerImage <= 0) {
     throw "pagesPerImage must be > 0";
   }
