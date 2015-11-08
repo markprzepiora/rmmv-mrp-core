@@ -6,21 +6,7 @@ import gui from 'nw.gui';
 import geometry from './geometry';
 import fs from 'fs';
 import path from 'path';
-
-function gameDir() {
-  const args     = gui.App.fullArgv;
-  const uriMatch = args.map((s) => s.match(/file:\/\/.*/))[0];
-
-  if (uriMatch) {
-    return path.dirname(decodeURI(uriMatch[0].slice(7)));
-  } else {
-    return null;
-  }
-}
-
-function homeDir() {
-  return window.process.env.HOME || window.process.env.USERPROFILE;
-}
+import { gameDir, homeDir } from './directories';
 
 function screenshotName(basename, suffix) {
   if (!basename) {

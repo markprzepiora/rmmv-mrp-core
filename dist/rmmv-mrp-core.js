@@ -366,7 +366,43 @@ MRP.OSXFixes.InstallAllFixes(); //==============================================
 
 window.MRP = MRP;
 
-},{"./module/index":19}],17:[function(require,module,exports){
+},{"./module/index":20}],17:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.gameDir = gameDir;
+exports.homeDir = homeDir;
+
+var _nw = require('nw.gui');
+
+var _nw2 = _interopRequireDefault(_nw);
+
+var _path = require('path');
+
+var _path2 = _interopRequireDefault(_path);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function gameDir() {
+  var args = _nw2.default.App.fullArgv;
+  var uriMatch = args.map(function (s) {
+    return s.match(/file:\/\/.*/);
+  })[0];
+
+  if (uriMatch) {
+    return _path2.default.dirname(decodeURI(uriMatch[0].slice(7)));
+  } else {
+    return null;
+  }
+}
+
+function homeDir() {
+  return window.process.env.HOME || window.process.env.USERPROFILE;
+}
+
+},{"nw.gui":undefined,"path":undefined}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -432,7 +468,7 @@ eventizeSingletonMethod(SceneManager, 'run', 'game.start');
 
 exports.default = GameObserver;
 
-},{"event-emitter":1}],18:[function(require,module,exports){
+},{"event-emitter":1}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -496,7 +532,7 @@ _gameObserver2.default.on('map.setup', function () {
 
 exports.default = geometry;
 
-},{"./game-observer":17}],19:[function(require,module,exports){
+},{"./game-observer":18}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -532,7 +568,7 @@ if (Utils.isNwjs()) {
   module.exports.MapExporter = MapExporter;
 }
 
-},{"./game-observer":17,"./geometry":18,"./map-exporter":20,"./option-parser":21,"./osx-fixes":23}],20:[function(require,module,exports){
+},{"./game-observer":18,"./geometry":19,"./map-exporter":21,"./option-parser":22,"./osx-fixes":24}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -556,27 +592,12 @@ var _path = require('path');
 
 var _path2 = _interopRequireDefault(_path);
 
+var _directories = require('./directories');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 if (!Utils.isNwjs()) {
   throw "rmmv-mrp-core/map-exporter can only be run during development";
-}
-
-function gameDir() {
-  var args = _nw2.default.App.fullArgv;
-  var uriMatch = args.map(function (s) {
-    return s.match(/file:\/\/.*/);
-  })[0];
-
-  if (uriMatch) {
-    return _path2.default.dirname(decodeURI(uriMatch[0].slice(7)));
-  } else {
-    return null;
-  }
-}
-
-function homeDir() {
-  return window.process.env.HOME || window.process.env.USERPROFILE;
 }
 
 function screenshotName(basename, suffix) {
@@ -591,7 +612,7 @@ function screenshotName(basename, suffix) {
 }
 
 function screenshotsDir() {
-  var dir = _path2.default.join(gameDir() || homeDir(), 'MapExporter');
+  var dir = _path2.default.join((0, _directories.gameDir)() || (0, _directories.homeDir)(), 'MapExporter');
 
   try {
     _fs2.default.mkdirSync(dir);
@@ -763,7 +784,7 @@ function exportMapAsync() {
   });
 }
 
-},{"./geometry":18,"fs":undefined,"nw.gui":undefined,"path":undefined}],21:[function(require,module,exports){
+},{"./directories":17,"./geometry":19,"fs":undefined,"nw.gui":undefined,"path":undefined}],22:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1108,7 +1129,7 @@ function extractAllOfType(str, type) {
   });
 }
 
-},{"./lexer-utils":22}],22:[function(require,module,exports){
+},{"./lexer-utils":23}],23:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1432,7 +1453,7 @@ function Lexer(_lexer) {
   };
 }
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1505,4 +1526,4 @@ function InstallAllFixes() {
   }
 }
 
-},{"./game-observer":17,"nw.gui":undefined,"os":undefined}]},{},[16]);
+},{"./game-observer":18,"nw.gui":undefined,"os":undefined}]},{},[16]);
