@@ -449,25 +449,31 @@ exports.FixOSXCopyPaste = FixOSXCopyPaste;
 exports.MoveDevToolsWindow = MoveDevToolsWindow;
 exports.InstallAllFixes = InstallAllFixes;
 
+var _nw = require('nw.gui');
+
+var _nw2 = _interopRequireDefault(_nw);
+
+var _os = require('os');
+
+var _os2 = _interopRequireDefault(_os);
+
 var _gameObserver = require('./game-observer');
 
 var _gameObserver2 = _interopRequireDefault(_gameObserver);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var isNwJS = !!(window.require || "").toString().match('nw.gui');
-
-// Only require the nw.gui module if we are actually running inside nw.js.
-var gui = isNwJS ? require('nw.gui') : null;
-var os = isNwJS ? require('os') : null;
+if (!Utils.isNwjs()) {
+  throw "rmmv-mrp-core/osx-fixes can only be run during development";
+}
 
 // Are we inside nw.js, and are we running OSX?
-var isOSX = os && os.platform() === "darwin";
+var isOSX = _os2.default && _os2.default.platform() === "darwin";
 
 function FixOSXCopyPaste() {
   if (isOSX) {
-    var win = gui.Window.get();
-    var nativeMenuBar = new gui.Menu({ type: "menubar" });
+    var win = _nw2.default.Window.get();
+    var nativeMenuBar = new _nw2.default.Menu({ type: "menubar" });
     nativeMenuBar.createMacBuiltin("Game");
     win.menu = nativeMenuBar;
   }
@@ -475,7 +481,7 @@ function FixOSXCopyPaste() {
 
 function _moveDevToolsWindow() {
   if (isOSX) {
-    var dev = gui.Window.get().showDevTools();
+    var dev = _nw2.default.Window.get().showDevTools();
     dev.x = 50;
     dev.y = 50;
   }
@@ -483,7 +489,7 @@ function _moveDevToolsWindow() {
 
 function MoveDevToolsWindow() {
   if (isOSX) {
-    var win = gui.Window.get();
+    var win = _nw2.default.Window.get();
 
     // YanFly's plugin sets the devtools position to 0,0 when the game starts.
     // So here we do it afterwards.

@@ -8,8 +8,6 @@
     "url": "git://github.com/markprzepiora/rmmv-mrp-core"
   },
   "dependencies": {
-    "blueimp-canvas-to-blob": "^2.2.0",
-    "browser-filesaver": "^1.1.0",
     "event-emitter": "^0.3.4"
   },
   "devDependencies": {

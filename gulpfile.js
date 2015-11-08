@@ -44,6 +44,10 @@ var createBundle = function(options, callback) {
   var bundler = browserify(opts)
     .exclude('nw.gui')
     .exclude('os')
+    .exclude('fs')
+    .exclude('path')
+    .exclude('buffer')
+    .exclude('process')
     .transform("babelify");
 
   if (global.isWatching) {

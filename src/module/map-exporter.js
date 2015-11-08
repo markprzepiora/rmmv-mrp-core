@@ -1,7 +1,50 @@
-require('blueimp-canvas-to-blob');
-var saveAs = require('browser-filesaver').saveAs;
+if (!Utils.isNwjs()) {
+  throw "rmmv-mrp-core/map-exporter can only be run during development";
+}
 
+import gui from 'nw.gui';
 import geometry from './geometry';
+import fs from 'fs';
+import path from 'path';
+
+function gameDir() {
+  const args     = gui.App.fullArgv;
+  const uriMatch = args.map((s) => s.match(/file:\/\/.*/))[0];
+
+  if (uriMatch) {
+    return path.dirname(decodeURI(uriMatch[0].slice(7)));
+  } else {
+    return null;
+  }
+}
+
+function homeDir() {
+  return window.process.env.HOME || window.process.env.USERPROFILE;
+}
+
+function screenshotName(basename, suffix) {
+  if (!basename) {
+    basename = $dataMapInfos[$gameMap._mapId].name;
+  }
+
+  const timestamp = new Date().toISOString();
+
+  return `${timestamp} ${basename} ${suffix}.png`;
+}
+
+function screenshotsDir() {
+  const dir = path.join(gameDir() || homeDir(), 'MapExporter');
+
+  try {
+    fs.mkdirSync(dir);
+  } catch (e) { }
+
+  return dir;
+}
+
+function screenshotPath(basename, suffix) {
+  return path.join(screenshotsDir(), screenshotName(basename, suffix));
+}
 
 // startX, deltaX, startY, deltaY are measured in *pages*.
 //
@@ -83,9 +126,7 @@ function imageSize(startPage, endPage, screenSizePx, mapSizePx) {
   return size;
 }
 
-function exportMap(startPageX, endPageX, startPageY, endPageY) {
-  // The pixel resolution of the image we are creating.
-
+function _exportMap(startPageX, endPageX, startPageY, endPageY, basename, suffix) {
   startPageX = Math.min(startPageX, geometry.MAP_WIDTH_PAGES);
   endPageX   = Math.min(endPageX,   geometry.MAP_WIDTH_PAGES);
   startPageY = Math.min(startPageY, geometry.MAP_HEIGHT_PAGES);
@@ -118,17 +159,40 @@ function exportMap(startPageX, endPageX, startPageY, endPageY) {
   // Restore the player's opacity.
   $gamePlayer._opacity = originalOpacity;
 
-  // Save the result to a file and download it.
-  canvas.toBlob(function(blob) {
-    saveAs(blob, "map.png");
-  });
+  const base64Data = canvas.toDataURL().replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
+  fs.writeFileSync(screenshotPath(basename, suffix), base64Data, 'base64');
 
   $gameMap._displayY = previousDisplayY;
   $gameMap._displayX = previousDisplayX;
 }
 
-export default function exportMapAsync(...args) {
+function exportMap(pagesPerImage, basename) {
+  var x = 0, xCounter = 0;
+  var y = 0, yCounter = 0;
+
+  do {
+    y = 0;
+    yCounter = 0;
+
+    do {
+      _exportMap(x, x + pagesPerImage, y, y + pagesPerImage, basename, `${xCounter}${yCounter}`);
+
+      y += pagesPerImage;
+      yCounter++;
+    } while (y + pagesPerImage <= geometry.MAP_HEIGHT_PAGES);
+
+    x += pagesPerImage;
+    xCounter++;
+  } while (x + pagesPerImage <= geometry.MAP_WIDTH_PAGES);
+}
+
+export default function exportMapAsync({ pagesPerImage = 6, basename = null } = {}) {
+  if (pagesPerImage <= 0) {
+    throw "pagesPerImage must be > 0";
+  }
+
   requestAnimationFrame(function() {
-    exportMap(0, geometry.MAP_WIDTH_PAGES, 0, geometry.MAP_HEIGHT_PAGES);
+    exportMap(pagesPerImage, basename);
+    gui.Shell.openItem(screenshotsDir());
   });
 }
