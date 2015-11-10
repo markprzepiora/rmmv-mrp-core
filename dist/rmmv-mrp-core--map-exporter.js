@@ -401,6 +401,10 @@ var _path = require('path');
 
 var _path2 = _interopRequireDefault(_path);
 
+var _os = require('os');
+
+var _os2 = _interopRequireDefault(_os);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function gameDir() {
@@ -409,8 +413,12 @@ function gameDir() {
     return s.match(/file:\/\/.*/);
   })[0];
 
+  // On Windows, we do not want the leading slash to end up in the filename, so
+  // we hack it off.
+  var sliceIndex = _os2.default.platform() === 'win32' ? 8 : 7;
+
   if (uriMatch) {
-    return _path2.default.dirname(decodeURI(uriMatch[0].slice(7)));
+    return _path2.default.dirname(decodeURI(uriMatch[0].slice(sliceIndex)));
   } else {
     return null;
   }
@@ -420,7 +428,7 @@ function homeDir() {
   return window.process.env.HOME || window.process.env.USERPROFILE;
 }
 
-},{"nw.gui":undefined,"path":undefined}],18:[function(require,module,exports){
+},{"nw.gui":undefined,"os":undefined,"path":undefined}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

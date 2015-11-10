@@ -1,12 +1,17 @@
 import gui from 'nw.gui';
 import path from 'path';
+import os from 'os';
 
 export function gameDir() {
   const args     = gui.App.fullArgv;
   const uriMatch = args.map((s) => s.match(/file:\/\/.*/))[0];
 
+  // On Windows, we do not want the leading slash to end up in the filename, so
+  // we hack it off.
+  const sliceIndex = os.platform() === 'win32' ? 8 : 7;
+
   if (uriMatch) {
-    return path.dirname(decodeURI(uriMatch[0].slice(7)));
+    return path.dirname(decodeURI(uriMatch[0].slice(sliceIndex)));
   } else {
     return null;
   }
