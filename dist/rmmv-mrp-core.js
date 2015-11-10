@@ -334,6 +334,253 @@ module.exports = function (searchString/*, position*/) {
 };
 
 },{}],16:[function(require,module,exports){
+var _curry2 = require('./internal/_curry2');
+var _dispatchable = require('./internal/_dispatchable');
+var _xfindIndex = require('./internal/_xfindIndex');
+
+
+/**
+ * Returns the index of the first element of the list which matches the predicate, or `-1`
+ * if no element matches.
+ *
+ * Dispatches to the `findIndex` method of the second argument, if present.
+ *
+ * Acts as a transducer if a transformer is given in list position.
+ * @see R.transduce
+ *
+ * @func
+ * @memberOf R
+ * @since v0.1.1
+ * @category List
+ * @sig (a -> Boolean) -> [a] -> Number
+ * @param {Function} fn The predicate function used to determine if the element is the
+ * desired one.
+ * @param {Array} list The array to consider.
+ * @return {Number} The index of the element found, or `-1`.
+ * @example
+ *
+ *      var xs = [{a: 1}, {a: 2}, {a: 3}];
+ *      R.findIndex(R.propEq('a', 2))(xs); //=> 1
+ *      R.findIndex(R.propEq('a', 4))(xs); //=> -1
+ */
+module.exports = _curry2(_dispatchable('findIndex', _xfindIndex, function findIndex(fn, list) {
+  var idx = 0;
+  var len = list.length;
+  while (idx < len) {
+    if (fn(list[idx])) {
+      return idx;
+    }
+    idx += 1;
+  }
+  return -1;
+}));
+
+},{"./internal/_curry2":18,"./internal/_dispatchable":19,"./internal/_xfindIndex":25}],17:[function(require,module,exports){
+/**
+ * Optimized internal one-arity curry function.
+ *
+ * @private
+ * @category Function
+ * @param {Function} fn The function to curry.
+ * @return {Function} The curried function.
+ */
+module.exports = function _curry1(fn) {
+  return function f1(a) {
+    if (arguments.length === 0) {
+      return f1;
+    } else if (a != null && a['@@functional/placeholder'] === true) {
+      return f1;
+    } else {
+      return fn.apply(this, arguments);
+    }
+  };
+};
+
+},{}],18:[function(require,module,exports){
+var _curry1 = require('./_curry1');
+
+
+/**
+ * Optimized internal two-arity curry function.
+ *
+ * @private
+ * @category Function
+ * @param {Function} fn The function to curry.
+ * @return {Function} The curried function.
+ */
+module.exports = function _curry2(fn) {
+  return function f2(a, b) {
+    var n = arguments.length;
+    if (n === 0) {
+      return f2;
+    } else if (n === 1 && a != null && a['@@functional/placeholder'] === true) {
+      return f2;
+    } else if (n === 1) {
+      return _curry1(function(b) { return fn(a, b); });
+    } else if (n === 2 && a != null && a['@@functional/placeholder'] === true &&
+                          b != null && b['@@functional/placeholder'] === true) {
+      return f2;
+    } else if (n === 2 && a != null && a['@@functional/placeholder'] === true) {
+      return _curry1(function(a) { return fn(a, b); });
+    } else if (n === 2 && b != null && b['@@functional/placeholder'] === true) {
+      return _curry1(function(b) { return fn(a, b); });
+    } else {
+      return fn(a, b);
+    }
+  };
+};
+
+},{"./_curry1":17}],19:[function(require,module,exports){
+var _isArray = require('./_isArray');
+var _isTransformer = require('./_isTransformer');
+var _slice = require('./_slice');
+
+
+/**
+ * Returns a function that dispatches with different strategies based on the
+ * object in list position (last argument). If it is an array, executes [fn].
+ * Otherwise, if it has a  function with [methodname], it will execute that
+ * function (functor case). Otherwise, if it is a transformer, uses transducer
+ * [xf] to return a new transformer (transducer case). Otherwise, it will
+ * default to executing [fn].
+ *
+ * @private
+ * @param {String} methodname property to check for a custom implementation
+ * @param {Function} xf transducer to initialize if object is transformer
+ * @param {Function} fn default ramda implementation
+ * @return {Function} A function that dispatches on object in list position
+ */
+module.exports = function _dispatchable(methodname, xf, fn) {
+  return function() {
+    var length = arguments.length;
+    if (length === 0) {
+      return fn();
+    }
+    var obj = arguments[length - 1];
+    if (!_isArray(obj)) {
+      var args = _slice(arguments, 0, length - 1);
+      if (typeof obj[methodname] === 'function') {
+        return obj[methodname].apply(obj, args);
+      }
+      if (_isTransformer(obj)) {
+        var transducer = xf.apply(null, args);
+        return transducer(obj);
+      }
+    }
+    return fn.apply(this, arguments);
+  };
+};
+
+},{"./_isArray":20,"./_isTransformer":21,"./_slice":23}],20:[function(require,module,exports){
+/**
+ * Tests whether or not an object is an array.
+ *
+ * @private
+ * @param {*} val The object to test.
+ * @return {Boolean} `true` if `val` is an array, `false` otherwise.
+ * @example
+ *
+ *      _isArray([]); //=> true
+ *      _isArray(null); //=> false
+ *      _isArray({}); //=> false
+ */
+module.exports = Array.isArray || function _isArray(val) {
+  return (val != null &&
+          val.length >= 0 &&
+          Object.prototype.toString.call(val) === '[object Array]');
+};
+
+},{}],21:[function(require,module,exports){
+module.exports = function _isTransformer(obj) {
+  return typeof obj['@@transducer/step'] === 'function';
+};
+
+},{}],22:[function(require,module,exports){
+module.exports = function _reduced(x) {
+  return x && x['@@transducer/reduced'] ? x :
+    {
+      '@@transducer/value': x,
+      '@@transducer/reduced': true
+    };
+};
+
+},{}],23:[function(require,module,exports){
+/**
+ * An optimized, private array `slice` implementation.
+ *
+ * @private
+ * @param {Arguments|Array} args The array or arguments object to consider.
+ * @param {Number} [from=0] The array index to slice from, inclusive.
+ * @param {Number} [to=args.length] The array index to slice to, exclusive.
+ * @return {Array} A new, sliced array.
+ * @example
+ *
+ *      _slice([1, 2, 3, 4, 5], 1, 3); //=> [2, 3]
+ *
+ *      var firstThreeArgs = function(a, b, c, d) {
+ *        return _slice(arguments, 0, 3);
+ *      };
+ *      firstThreeArgs(1, 2, 3, 4); //=> [1, 2, 3]
+ */
+module.exports = function _slice(args, from, to) {
+  switch (arguments.length) {
+    case 1: return _slice(args, 0, args.length);
+    case 2: return _slice(args, from, args.length);
+    default:
+      var list = [];
+      var idx = 0;
+      var len = Math.max(0, Math.min(args.length, to) - from);
+      while (idx < len) {
+        list[idx] = args[from + idx];
+        idx += 1;
+      }
+      return list;
+  }
+};
+
+},{}],24:[function(require,module,exports){
+module.exports = {
+  init: function() {
+    return this.xf['@@transducer/init']();
+  },
+  result: function(result) {
+    return this.xf['@@transducer/result'](result);
+  }
+};
+
+},{}],25:[function(require,module,exports){
+var _curry2 = require('./_curry2');
+var _reduced = require('./_reduced');
+var _xfBase = require('./_xfBase');
+
+
+module.exports = (function() {
+  function XFindIndex(f, xf) {
+    this.xf = xf;
+    this.f = f;
+    this.idx = -1;
+    this.found = false;
+  }
+  XFindIndex.prototype['@@transducer/init'] = _xfBase.init;
+  XFindIndex.prototype['@@transducer/result'] = function(result) {
+    if (!this.found) {
+      result = this.xf['@@transducer/step'](result, -1);
+    }
+    return this.xf['@@transducer/result'](result);
+  };
+  XFindIndex.prototype['@@transducer/step'] = function(result, input) {
+    this.idx += 1;
+    if (this.f(input)) {
+      this.found = true;
+      result = _reduced(this.xf['@@transducer/step'](result, this.idx));
+    }
+    return result;
+  };
+
+  return _curry2(function _xfindIndex(f, xf) { return new XFindIndex(f, xf); });
+})();
+
+},{"./_curry2":18,"./_reduced":22,"./_xfBase":24}],26:[function(require,module,exports){
 'use strict';
 
 var _index = require('./module/index');
@@ -366,7 +613,29 @@ MRP.OSXFixes.InstallAllFixes(); //==============================================
 
 window.MRP = MRP;
 
-},{"./module/index":20}],17:[function(require,module,exports){
+},{"./module/index":32}],27:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.run = run;
+function run(id) {
+  $gameTemp.reserveCommonEvent(id);
+}
+
+},{}],28:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.findItem = findItem;
+function findItem(id) {
+  return $dataItems[id];
+}
+
+},{}],29:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -410,16 +679,22 @@ function homeDir() {
   return window.process.env.HOME || window.process.env.USERPROFILE;
 }
 
-},{"nw.gui":undefined,"os":undefined,"path":undefined}],18:[function(require,module,exports){
-"use strict";
+},{"nw.gui":undefined,"os":undefined,"path":undefined}],30:[function(require,module,exports){
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _eventEmitter = require("event-emitter");
+var _eventEmitter = require('event-emitter');
 
 var _eventEmitter2 = _interopRequireDefault(_eventEmitter);
+
+var _map = require('./map');
+
+var Map = _interopRequireWildcard(_map);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -474,9 +749,17 @@ eventizeSingletonMethod(BattleManager, 'endTurn', 'turn.end');
 eventizeSingletonMethod(BattleManager, 'startTurn', 'turn.start');
 eventizeSingletonMethod(SceneManager, 'run', 'game.start');
 
+GameObserver.onMap = function onMap(mapName, callback) {
+  GameObserver.on('map.setup', function () {
+    if (Map.info().name === mapName) {
+      callback();
+    }
+  });
+};
+
 exports.default = GameObserver;
 
-},{"event-emitter":1}],19:[function(require,module,exports){
+},{"./map":35,"event-emitter":1}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -540,13 +823,13 @@ _gameObserver2.default.on('map.setup', function () {
 
 exports.default = geometry;
 
-},{"./game-observer":18}],20:[function(require,module,exports){
+},{"./game-observer":30}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Geometry = exports.OptionParser = exports.GameObserver = undefined;
+exports.Map = exports.Database = exports.Inventory = exports.CommonEvents = exports.Geometry = exports.OptionParser = exports.GameObserver = undefined;
 
 var _gameObserver = require('./game-observer');
 
@@ -560,6 +843,22 @@ var _geometry = require('./geometry');
 
 var _geometry2 = _interopRequireDefault(_geometry);
 
+var _commonEvents = require('./common-events');
+
+var CommonEvents = _interopRequireWildcard(_commonEvents);
+
+var _inventory = require('./inventory');
+
+var Inventory = _interopRequireWildcard(_inventory);
+
+var _database = require('./database');
+
+var Database = _interopRequireWildcard(_database);
+
+var _map = require('./map');
+
+var Map = _interopRequireWildcard(_map);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -567,6 +866,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 exports.GameObserver = _gameObserver2.default;
 exports.OptionParser = OptionParser;
 exports.Geometry = _geometry2.default;
+exports.CommonEvents = CommonEvents;
+exports.Inventory = Inventory;
+exports.Database = Database;
+exports.Map = Map;
 
 if (Utils.isNwjs()) {
   var MapExporter = require('./map-exporter').default;
@@ -576,7 +879,28 @@ if (Utils.isNwjs()) {
   module.exports.MapExporter = MapExporter;
 }
 
-},{"./game-observer":18,"./geometry":19,"./map-exporter":21,"./option-parser":22,"./osx-fixes":24}],21:[function(require,module,exports){
+},{"./common-events":27,"./database":28,"./game-observer":30,"./geometry":31,"./inventory":33,"./map":35,"./map-exporter":34,"./option-parser":36,"./osx-fixes":38}],33:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.addItem = addItem;
+exports.clearItem = clearItem;
+
+var _database = require('./database');
+
+function addItem(id) {
+  var quantity = arguments.length <= 1 || arguments[1] === undefined ? 1 : arguments[1];
+
+  return $gameParty.gainItem((0, _database.findItem)(id), quantity);
+}
+
+function clearItem(id) {
+  addItem(id, -99999);
+}
+
+},{"./database":28}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -792,7 +1116,70 @@ function exportMapAsync() {
   });
 }
 
-},{"./directories":17,"./geometry":19,"fs":undefined,"nw.gui":undefined,"path":undefined}],22:[function(require,module,exports){
+},{"./directories":29,"./geometry":31,"fs":undefined,"nw.gui":undefined,"path":undefined}],35:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.findAllEvents = findAllEvents;
+exports.findEvent = findEvent;
+exports.findEventByName = findEventByName;
+exports.event = event;
+exports.info = info;
+
+var _findIndex = require('ramda/src/findIndex');
+
+var _findIndex2 = _interopRequireDefault(_findIndex);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function findAllEvents() {
+  return $gameMap.events().map(function (e) {
+    return findEvent(e.eventId());
+  });
+}
+
+function findEvent(id) {
+  var definition = $dataMap.events[id];
+  var instance = $gameMap._events[id];
+
+  if (!definition) {
+    throw 'could not find event definition with id ' + id;
+  }
+
+  if (!instance) {
+    throw 'could not find event instance with id ' + id;
+  }
+
+  return { definition: definition, instance: instance, id: id };
+}
+
+function findEventByName(name) {
+  var id = (0, _findIndex2.default)(function (e) {
+    return e && e.name === name;
+  }, $dataMap.events);
+
+  if (id < 0) {
+    throw 'could not find event with name ' + name;
+  }
+
+  return findEvent(id);
+}
+
+function event(idOrName) {
+  if (typeof idOrName === 'number') {
+    return findEvent(idOrName);
+  } else {
+    return findEventByName(idOrName);
+  }
+}
+
+function info() {
+  return $dataMapInfos[$gameMap.mapId()];
+}
+
+},{"ramda/src/findIndex":16}],36:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1203,7 +1590,7 @@ function extractAllOfType(str, type) {
   });
 }
 
-},{"./lexer-utils":23}],23:[function(require,module,exports){
+},{"./lexer-utils":37}],37:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1538,7 +1925,7 @@ function Lexer(_lexer) {
   };
 }
 
-},{}],24:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1611,4 +1998,4 @@ function InstallAllFixes() {
   }
 }
 
-},{"./game-observer":18,"nw.gui":undefined,"os":undefined}]},{},[16]);
+},{"./game-observer":30,"nw.gui":undefined,"os":undefined}]},{},[26]);
