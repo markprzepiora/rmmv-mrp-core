@@ -1,4 +1,5 @@
 import ee from 'event-emitter';
+import * as Map from './map';
 
 // Example:
 //
@@ -45,5 +46,13 @@ eventizePrototypeMethod(Game_Map,       'setup',          'map.setup');
 eventizeSingletonMethod(BattleManager,  'endTurn',        'turn.end');
 eventizeSingletonMethod(BattleManager,  'startTurn',      'turn.start');
 eventizeSingletonMethod(SceneManager,   'run',            'game.start');
+
+GameObserver.onMap = function onMap(mapName, callback) {
+  GameObserver.on('map.setup', function() {
+    if (Map.info().name === mapName) {
+      callback();
+    }
+  });
+}
 
 export default GameObserver;

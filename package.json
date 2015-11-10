@@ -8,7 +8,8 @@
     "url": "git://github.com/markprzepiora/rmmv-mrp-core"
   },
   "dependencies": {
-    "event-emitter": "^0.3.4"
+    "event-emitter": "^0.3.4",
+    "ramda": "^0.18.0"
   },
   "devDependencies": {
     "babel": "^6.0.15",
