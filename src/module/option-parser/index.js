@@ -36,10 +36,12 @@ const BARESTRING = concat('BARESTRING', seq(
   )
 ));
 
+const parseStringLiteral = (str) => JSON.parse(str.replace(/\n/g, '\\n'));
+
 const COMMA        = regex('COMMA', /,/);
 const NUMBER       = regex('NUMBER', /-?[0-9]+(\.[0-9]+)?/);
 const BOOLEAN      = regex('BOOLEAN', /(true|false)/, 'i');
-const QUOTEDSTRING = map(JSON.parse, regex('BARESTRING', /"([^"]|\")*"/));
+const QUOTEDSTRING = map(parseStringLiteral, regex('BARESTRING', /"([^"]|\")*"/));
 
 const lex = Lexer(or(
   WHITESPACE,

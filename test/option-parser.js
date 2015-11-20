@@ -83,6 +83,16 @@ JS.Test.describe("option-parser", function() {
     this.assertEqual('Currency', object.type);
   });
 
+  this.it("parses a name with a dash", function() {
+    var payload = `
+      <my-tag>
+    `;
+    var object = parse(payload);
+
+    this.assertNotNull(object, 'returned value should not be null, but was');
+    this.assertEqual('my-tag', object.type);
+  });
+
   this.it("parses a named object", function() {
     var payload = `
       <Currency name: Justice Points>
@@ -256,6 +266,21 @@ JS.Test.describe("option-parser", function() {
       const opts = parse(payload);
 
       this.assertEqual('"', opts.args[0]);
+    });
+  });
+
+  this.describe("string literals with linebreaks", function() {
+    this.it("parses string literals with linebreaks", function() {
+      const payload = `
+<my-tag "
+foo
+bar
+baz
+ ">
+      `;
+      const opts = parse(payload);
+
+      this.assertEqual("\nfoo\nbar\nbaz\n ", opts.args[0]);
     });
   });
 });

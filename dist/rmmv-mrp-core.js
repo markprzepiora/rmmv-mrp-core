@@ -834,10 +834,14 @@ var BAREWORD = (0, _lexerUtils.regex)('BAREWORD', /[^,:><"\s]+/);
 
 var BARESTRING = (0, _lexerUtils.concat)('BARESTRING', (0, _lexerUtils.seq)(BAREWORD, (0, _lexerUtils.repeat)((0, _lexerUtils.notFollowedBy)((0, _lexerUtils.seq)(SIGNIFICANT_WHITESPACE, BAREWORD), (0, _lexerUtils.seq)((0, _lexerUtils.optional)(WHITESPACE), KEYVALSEP)))));
 
+var parseStringLiteral = function parseStringLiteral(str) {
+  return JSON.parse(str.replace(/\n/g, '\\n'));
+};
+
 var COMMA = (0, _lexerUtils.regex)('COMMA', /,/);
 var NUMBER = (0, _lexerUtils.regex)('NUMBER', /-?[0-9]+(\.[0-9]+)?/);
 var BOOLEAN = (0, _lexerUtils.regex)('BOOLEAN', /(true|false)/, 'i');
-var QUOTEDSTRING = (0, _lexerUtils.map)(JSON.parse, (0, _lexerUtils.regex)('BARESTRING', /"([^"]|\")*"/));
+var QUOTEDSTRING = (0, _lexerUtils.map)(parseStringLiteral, (0, _lexerUtils.regex)('BARESTRING', /"([^"]|\")*"/));
 
 var lex = (0, _lexerUtils.Lexer)((0, _lexerUtils.or)(WHITESPACE,
 
