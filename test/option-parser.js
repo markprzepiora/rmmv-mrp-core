@@ -236,4 +236,26 @@ JS.Test.describe("option-parser", function() {
       this.assertNull(opts);
     });
   });
+
+  this.describe("strings with escape characters", function() {
+    this.it("parses escaped backslashes", function() {
+      const slash = '\\';
+      const payload = `
+        <foo "${slash}${slash}${slash}${slash}c">
+      `;
+      const opts = parse(payload);
+
+      this.assertEqual(slash + slash + "c", opts.args[0]);
+    });
+
+    this.it("parses escaped quotes", function() {
+      const slash = '\\';
+      const payload = `
+        <foo "${slash}"">
+      `;
+      const opts = parse(payload);
+
+      this.assertEqual('"', opts.args[0]);
+    });
+  });
 });

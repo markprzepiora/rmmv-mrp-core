@@ -39,7 +39,7 @@ const BARESTRING = concat('BARESTRING', seq(
 const COMMA        = regex('COMMA', /,/);
 const NUMBER       = regex('NUMBER', /-?[0-9]+(\.[0-9]+)?/);
 const BOOLEAN      = regex('BOOLEAN', /(true|false)/, 'i');
-const QUOTEDSTRING = map(JSON.parse, regex('BARESTRING', /"([^"]|\\")*"/));
+const QUOTEDSTRING = map(JSON.parse, regex('BARESTRING', /"([^"]|\")*"/));
 
 const lex = Lexer(or(
   WHITESPACE,
