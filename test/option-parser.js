@@ -212,8 +212,7 @@ JS.Test.describe("option-parser", function() {
 
     this.it("extractAll works with tags that have blocks", function() {
       var payload = `
-        <cat>Belldandy</cat>
-        <cat>Jester</cat>
+        <cat>Belldandy</cat><cat>Jester</cat>
       `;
 
       var optionsList = extractAll(payload);
