@@ -3,8 +3,9 @@
 // type - e.g. 'UNDERSCORE'
 // token - e.g. '_'
 // pos - the (starting) position in the string where it occurred
-export function Token(type, token, pos) {
-  return { type, token, pos };
+// string - the full string being tokenized
+export function Token(type, token, pos, string) {
+  return { type, token, pos, string };
 }
 
 // Construct a response returned by a lexer.
@@ -56,15 +57,24 @@ export function CharacterStream(fullString, pos = 0) {
     ...Stream(fullString, pos),
     advance: (index = 1) => CharacterStream(fullString, pos + index),
     flush: () => CharacterStream(fullString, fullString.length),
-    Token: (type, token) => Token(type, token, pos),
+    Token: (type, token) => Token(type, token, pos, fullString),
   }
 }
 
 export function TokenStream(buffer, pos = 0) {
+  const string = buffer.length > 0 ? buffer[0].string : "";
+
   return {
     ...Stream(buffer, pos),
+
+    // advance to the next token
     advance: (index = 1) => TokenStream(buffer, pos + index),
+
+    // is the cursor at a token of type `type`?
     ofType: (type) => (pos < buffer.length && buffer[pos].type === type),
+
+    // the original string being parsed
+    string: string,
   }
 }
 
@@ -170,7 +180,7 @@ export function map(fn, matcher) {
     var match;
     if (match = matcher(previousTokens, charStream)) {
       const mappedTokens = match.tokens.map(
-        ({ type, token, pos }) => Token(type, fn(token), pos));
+        ({ type, token, pos, string }) => Token(type, fn(token), pos, string));
 
       return LexerResponse(
         mappedTokens, match.newCharacterStream);

@@ -1,5 +1,5 @@
 import {
-  lex, parse, extractAll, extractAllOfType, extractFirst, extractFirstOfType
+  lex, parse, extractAll, extractAllOfType, extractFirst, extractFirstOfType, _tokenize
 } from '../src/module/option-parser';
 
 JS.Test.describe("option-parser", function() {
@@ -281,6 +281,30 @@ baz
       const opts = parse(payload);
 
       this.assertEqual("\nfoo\nbar\nbaz\n ", opts.args[0]);
+    });
+  });
+
+  this.describe("text blocks", function() {
+    this.it("parses a tag with a block of text", function() {
+      const opts = parse(`
+        <my-tag foo: "bar">This is a "block" of "
+text" inside.</my-tag>
+      `);
+
+      this.assertNotNull(opts);
+      this.assertEqual('my-tag', opts.type);
+      this.assertEqual('bar', opts.foo);
+      this.assertEqual(`This is a "block" of "
+text" inside.`, opts.block);
+    });
+
+    this.it("parses a tag with a block of text containing its own tags", function() {
+      const opts = parse(`
+        <my-tag>foo <b>bar</b> baz</my-tag>
+      `);
+
+      this.assertNotNull(opts);
+      this.assertEqual(`foo <b>bar</b> baz`, opts.block);
     });
   });
 });

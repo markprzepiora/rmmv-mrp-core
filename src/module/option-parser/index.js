@@ -3,13 +3,14 @@ import {
   Lexer, TokenStream
 } from './lexer-utils';
 
-const BRA          = regex('BRA', /</);
-const KET          = regex('KET', />/);
-const WHITESPACE   = skip(regex('WHITESPACE', /\s+/));
-const IDENTIFIER   = regex('IDENTIFIER', /[a-zA-Z_][a-zA-Z0-9-_]*/);
-const KEY          = regex('KEY', /[a-zA-Z_][a-zA-Z0-9-_]*/);
-const KEYVALSEP    = regex('KEYVALSEP', /:/);
-const KEYVAL       = seq(KEY, optional(WHITESPACE), KEYVALSEP);
+const BRA         = regex('BRA', /</);
+const KET         = regex('KET', />/);
+const WHITESPACE  = skip(regex('WHITESPACE', /\s+/));
+const IDENTIFIER  = regex('IDENTIFIER', /[a-zA-Z_][a-zA-Z0-9-_]*/);
+const KEY         = regex('KEY', /[a-zA-Z_][a-zA-Z0-9-_]*/);
+const KEYVALSEP   = regex('KEYVALSEP', /:/);
+const KEYVAL      = seq(KEY, optional(WHITESPACE), KEYVALSEP);
+const SLASH       = regex('SLASH', /\//);
 
 // Bare strings are complicated because we need to allow commas between key
 // value pairs to be optional. So in the following string,
@@ -41,7 +42,7 @@ const parseStringLiteral = (str) => JSON.parse(str.replace(/\n/g, '\\n'));
 const COMMA        = regex('COMMA', /,/);
 const NUMBER       = regex('NUMBER', /-?[0-9]+(\.[0-9]+)?/);
 const BOOLEAN      = regex('BOOLEAN', /(true|false)/, 'i');
-const QUOTEDSTRING = map(parseStringLiteral, regex('BARESTRING', /"([^"]|\")*"/));
+const QUOTEDSTRING = regex('QUOTEDSTRING', /"(\\.|[^"\\])*"/);
 
 const lex = Lexer(or(
   WHITESPACE,
@@ -66,6 +67,12 @@ const lex = Lexer(or(
   //  ^^^^^^^^^^
   seq(
     precededByToken('BRA'), optional(WHITESPACE), notFollowedBy(IDENTIFIER, COMMA)
+  ),
+
+  // </Identifier>
+  //  ^^^^^^^^^^^^
+  seq(
+    precededByToken('BRA'), SLASH, optional(WHITESPACE), IDENTIFIER, optional(WHITESPACE), KET
   ),
 
   KEYVALSEP,
@@ -190,19 +197,20 @@ function parseKeyVal(tokenStream) {
 
 // Parses the value from a key-value pair, or a bare value as a positional
 // argument.
-function parseVal(tokenStream) {
-  if (tokenStream.empty) {
+function parseVal(stream) {
+  if (stream.empty) {
     return null;
   }
 
-  var token = tokenStream.get();
+  const { token, type } = stream.get();
 
-  switch(token.type) {
-    case 'NUMBER':     return [Number(token.token), tokenStream.advance()];
+  switch(type) {
+    case 'NUMBER':       return [Number(token), stream.advance()];
+    case 'QUOTEDSTRING': return [parseStringLiteral(token), stream.advance()];
     case 'BARESTRING':
-    case 'KEY':        return [token.token, tokenStream.advance()];
-    case 'BOOLEAN':    return [token.token.toLowerCase() === 'true' ? true : false, tokenStream.advance()];
-    default:           return null;
+    case 'KEY':          return [token, stream.advance()];
+    case 'BOOLEAN':      return [token.toLowerCase() === 'true' ? true : false, stream.advance()];
+    default:             return null;
   }
 }
 
@@ -263,7 +271,61 @@ function parseNamedObject(tokenStream) {
     return null;
   }
 
-  return [{ ...object, type: secondTokenStream.get().token }, ketStream.advance()];
+  // e.g. Currency
+  const type = secondTokenStream.get().token;
+
+  // At this point, we have a valid object. But we might also have a block of
+  // text to parse after it.
+  const endTagMatch = findSequence(function(stream) {
+    return streamAtSequence(['BRA', 'SLASH', 'IDENTIFIER', 'KET'], stream) &&
+           stream.advance(2).get().token === type;
+  }, ketStream.advance());
+
+  if (endTagMatch) {
+    return [{ ...object, type, block: endTagMatch[0] }, ketStream.advance(4)];
+  } else {
+    return [{ ...object, type }, ketStream.advance()];
+  }
+}
+
+// true if the stream is pointing at the given sequence of token names
+function streamAtSequence(tokenNames, stream) {
+  for (var i = 0; i < tokenNames.length; i++) {
+    if (!stream.advance(i).ofType(tokenNames[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// Looks for a sequence of tokens somewhere ahead in the stream.
+//
+// If present, returns a tuple,
+//
+// - first element: the string leading up to matching stream.
+// - second element: the stream starting at the match.
+//
+// Otherwise returns null.
+function findSequence(fn, stream) {
+  // Otherwise, if the stream is empty, can't do anything.
+  if (stream.empty) {
+    return null;
+  }
+
+  // Stream isn't empty, so we can get a token out of it.
+  const startPos = stream.get().pos;
+  const string = stream.get().string;
+
+  while (stream.present) {
+    if (fn(stream)) {
+      return [string.slice(startPos, stream.get().pos), stream];
+    }
+
+    stream = stream.advance();
+  }
+
+  return null;
 }
 
 function parseObject(tokenStream) {
@@ -278,6 +340,8 @@ function parseTokenStream(tokenStream) {
     return null;
   }
 }
+
+export const _tokenize = (str) => TokenStream(lex(str));
 
 export function parse(str) {
   return parseTokenStream(TokenStream(lex(str)));

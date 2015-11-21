@@ -802,7 +802,7 @@ var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.extractFirst = undefined;
+exports.extractFirst = exports._tokenize = undefined;
 exports.parse = parse;
 exports.extractAll = extractAll;
 exports.extractFirstOfType = extractFirstOfType;
@@ -821,6 +821,7 @@ var IDENTIFIER = (0, _lexerUtils.regex)('IDENTIFIER', /[a-zA-Z_][a-zA-Z0-9-_]*/)
 var KEY = (0, _lexerUtils.regex)('KEY', /[a-zA-Z_][a-zA-Z0-9-_]*/);
 var KEYVALSEP = (0, _lexerUtils.regex)('KEYVALSEP', /:/);
 var KEYVAL = (0, _lexerUtils.seq)(KEY, (0, _lexerUtils.optional)(WHITESPACE), KEYVALSEP);
+var SLASH = (0, _lexerUtils.regex)('SLASH', /\//);
 
 // Bare strings are complicated because we need to allow commas between key
 // value pairs to be optional. So in the following string,
@@ -841,7 +842,7 @@ var parseStringLiteral = function parseStringLiteral(str) {
 var COMMA = (0, _lexerUtils.regex)('COMMA', /,/);
 var NUMBER = (0, _lexerUtils.regex)('NUMBER', /-?[0-9]+(\.[0-9]+)?/);
 var BOOLEAN = (0, _lexerUtils.regex)('BOOLEAN', /(true|false)/, 'i');
-var QUOTEDSTRING = (0, _lexerUtils.map)(parseStringLiteral, (0, _lexerUtils.regex)('BARESTRING', /"([^"]|\")*"/));
+var QUOTEDSTRING = (0, _lexerUtils.regex)('QUOTEDSTRING', /"(\\.|[^"\\])*"/);
 
 var lex = (0, _lexerUtils.Lexer)((0, _lexerUtils.or)(WHITESPACE,
 
@@ -863,7 +864,11 @@ COMMA,
 
 // <Identifier key: "val">
 //  ^^^^^^^^^^
-(0, _lexerUtils.seq)((0, _lexerUtils.precededByToken)('BRA'), (0, _lexerUtils.optional)(WHITESPACE), (0, _lexerUtils.notFollowedBy)(IDENTIFIER, COMMA)), KEYVALSEP, NUMBER, BOOLEAN, QUOTEDSTRING, BARESTRING));
+(0, _lexerUtils.seq)((0, _lexerUtils.precededByToken)('BRA'), (0, _lexerUtils.optional)(WHITESPACE), (0, _lexerUtils.notFollowedBy)(IDENTIFIER, COMMA)),
+
+// </Identifier>
+//  ^^^^^^^^^^^^
+(0, _lexerUtils.seq)((0, _lexerUtils.precededByToken)('BRA'), SLASH, (0, _lexerUtils.optional)(WHITESPACE), IDENTIFIER, (0, _lexerUtils.optional)(WHITESPACE), KET), KEYVALSEP, NUMBER, BOOLEAN, QUOTEDSTRING, BARESTRING));
 
 /*
 
@@ -984,21 +989,26 @@ function parseKeyVal(tokenStream) {
 
 // Parses the value from a key-value pair, or a bare value as a positional
 // argument.
-function parseVal(tokenStream) {
-  if (tokenStream.empty) {
+function parseVal(stream) {
+  if (stream.empty) {
     return null;
   }
 
-  var token = tokenStream.get();
+  var _stream$get = stream.get();
 
-  switch (token.type) {
+  var token = _stream$get.token;
+  var type = _stream$get.type;
+
+  switch (type) {
     case 'NUMBER':
-      return [Number(token.token), tokenStream.advance()];
+      return [Number(token), stream.advance()];
+    case 'QUOTEDSTRING':
+      return [parseStringLiteral(token), stream.advance()];
     case 'BARESTRING':
     case 'KEY':
-      return [token.token, tokenStream.advance()];
+      return [token, stream.advance()];
     case 'BOOLEAN':
-      return [token.token.toLowerCase() === 'true' ? true : false, tokenStream.advance()];
+      return [token.toLowerCase() === 'true' ? true : false, stream.advance()];
     default:
       return null;
   }
@@ -1067,7 +1077,60 @@ function parseNamedObject(tokenStream) {
     return null;
   }
 
-  return [_extends({}, object, { type: secondTokenStream.get().token }), ketStream.advance()];
+  // e.g. Currency
+  var type = secondTokenStream.get().token;
+
+  // At this point, we have a valid object. But we might also have a block of
+  // text to parse after it.
+  var endTagMatch = findSequence(function (stream) {
+    return streamAtSequence(['BRA', 'SLASH', 'IDENTIFIER', 'KET'], stream) && stream.advance(2).get().token === type;
+  }, ketStream.advance());
+
+  if (endTagMatch) {
+    return [_extends({}, object, { type: type, block: endTagMatch[0] }), ketStream.advance(4)];
+  } else {
+    return [_extends({}, object, { type: type }), ketStream.advance()];
+  }
+}
+
+// true if the stream is pointing at the given sequence of token names
+function streamAtSequence(tokenNames, stream) {
+  for (var i = 0; i < tokenNames.length; i++) {
+    if (!stream.advance(i).ofType(tokenNames[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// Looks for a sequence of tokens somewhere ahead in the stream.
+//
+// If present, returns a tuple,
+//
+// - first element: the string leading up to matching stream.
+// - second element: the stream starting at the match.
+//
+// Otherwise returns null.
+function findSequence(fn, stream) {
+  // Otherwise, if the stream is empty, can't do anything.
+  if (stream.empty) {
+    return null;
+  }
+
+  // Stream isn't empty, so we can get a token out of it.
+  var startPos = stream.get().pos;
+  var string = stream.get().string;
+
+  while (stream.present) {
+    if (fn(stream)) {
+      return [string.slice(startPos, stream.get().pos), stream];
+    }
+
+    stream = stream.advance();
+  }
+
+  return null;
 }
 
 function parseObject(tokenStream) {
@@ -1082,6 +1145,10 @@ function parseTokenStream(tokenStream) {
     return null;
   }
 }
+
+var _tokenize = exports._tokenize = function _tokenize(str) {
+  return (0, _lexerUtils.TokenStream)(lex(str));
+};
 
 function parse(str) {
   return parseTokenStream((0, _lexerUtils.TokenStream)(lex(str)));
@@ -1170,8 +1237,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 // type - e.g. 'UNDERSCORE'
 // token - e.g. '_'
 // pos - the (starting) position in the string where it occurred
-function _Token(type, token, pos) {
-  return { type: type, token: token, pos: pos };
+// string - the full string being tokenized
+function _Token(type, token, pos, string) {
+  return { type: type, token: token, pos: pos, string: string };
 }
 
 // Construct a response returned by a lexer.
@@ -1242,7 +1310,7 @@ function CharacterStream(fullString) {
       return CharacterStream(fullString, fullString.length);
     },
     Token: function Token(type, token) {
-      return _Token(type, token, pos);
+      return _Token(type, token, pos, fullString);
     }
   });
 }
@@ -1250,14 +1318,23 @@ function CharacterStream(fullString) {
 function TokenStream(buffer) {
   var pos = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
 
+  var string = buffer.length > 0 ? buffer[0].string : "";
+
   return _extends({}, Stream(buffer, pos), {
+
+    // advance to the next token
     advance: function advance() {
       var index = arguments.length <= 0 || arguments[0] === undefined ? 1 : arguments[0];
       return TokenStream(buffer, pos + index);
     },
+
+    // is the cursor at a token of type `type`?
     ofType: function ofType(type) {
       return pos < buffer.length && buffer[pos].type === type;
-    }
+    },
+
+    // the original string being parsed
+    string: string
   });
 }
 
@@ -1365,7 +1442,8 @@ function map(fn, matcher) {
         var type = _ref.type;
         var token = _ref.token;
         var pos = _ref.pos;
-        return _Token(type, fn(token), pos);
+        var string = _ref.string;
+        return _Token(type, fn(token), pos, string);
       });
 
       return LexerResponse(mappedTokens, match.newCharacterStream);

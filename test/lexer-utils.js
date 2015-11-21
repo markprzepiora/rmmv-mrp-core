@@ -11,10 +11,10 @@ JS.Test.describe("lexer-utils", function() {
 
       this.assertEqual(
         [
-          Token('WORD', 'this ',  0),
-          Token('WORD', 'is ',    5),
-          Token('WORD', 'a ',     8),
-          Token('WORD', 'string', 10)
+          Token('WORD', 'this ',  0 , "this is a string"),
+          Token('WORD', 'is ',    5 , "this is a string"),
+          Token('WORD', 'a ',     8 , "this is a string"),
+          Token('WORD', 'string', 10, "this is a string")
         ],
         tokens
       );
@@ -30,11 +30,11 @@ JS.Test.describe("lexer-utils", function() {
 
       this.assertEqual(
         [
-          Token('WORD',       'foo', 0),
-          Token('WHITESPACE', '  ',  3),
-          Token('NUMBER',     '123', 5),
-          Token('WHITESPACE', ' ',   8),
-          Token('WORD',       'bar', 9)
+          Token('WORD',       'foo', 0, "foo  123 bar"),
+          Token('WHITESPACE', '  ',  3, "foo  123 bar"),
+          Token('NUMBER',     '123', 5, "foo  123 bar"),
+          Token('WHITESPACE', ' ',   8, "foo  123 bar"),
+          Token('WORD',       'bar', 9, "foo  123 bar")
         ],
         tokens
       );
@@ -49,8 +49,8 @@ JS.Test.describe("lexer-utils", function() {
 
       this.assertEqual(
         [
-          Token('WORD', 'foo', 0),
-          Token('WORD', 'bar', 4),
+          Token('WORD', 'foo', 0, "foo bar"),
+          Token('WORD', 'bar', 4, "foo bar"),
         ],
         tokens
       );
@@ -68,9 +68,9 @@ JS.Test.describe("lexer-utils", function() {
 
       this.assertEqual(
         [
-          Token('WORD',  'key', 0),
-          Token('COLON', ':',   3),
-          Token('WORD',  'val', 5),
+          Token('WORD',  'key', 0, "key: val "),
+          Token('COLON', ':',   3, "key: val "),
+          Token('WORD',  'val', 5, "key: val "),
         ],
         tokens
       );
@@ -87,9 +87,9 @@ JS.Test.describe("lexer-utils", function() {
 
       this.assertEqual(
         [
-          Token('KEY', 'foo', 0),
-          Token('COLON', ':', 3),
-          Token('VAL', 'bar', 4),
+          Token('KEY', 'foo', 0, "foo:bar"),
+          Token('COLON', ':', 3, "foo:bar"),
+          Token('VAL', 'bar', 4, "foo:bar"),
         ],
         tokens
       );
@@ -104,8 +104,8 @@ JS.Test.describe("lexer-utils", function() {
 
       this.assertEqual(
         [
-          Token('NUMBER', 123, 0),
-          Token('NUMBER', 789, 4),
+          Token('NUMBER', 123, 0, "123 789"),
+          Token('NUMBER', 789, 4, "123 789"),
         ],
         tokens
       );
@@ -119,9 +119,9 @@ JS.Test.describe("lexer-utils", function() {
       const { tokens } = WORDS([], CharacterStream('foo bar baz'));
 
       this.assertEqual([
-        Token('WORD', 'foo ', 0),
-        Token('WORD', 'bar ', 4),
-        Token('WORD', 'baz',  8)
+        Token('WORD', 'foo ', 0, "foo bar baz"),
+        Token('WORD', 'bar ', 4, "foo bar baz"),
+        Token('WORD', 'baz',  8, "foo bar baz")
       ], tokens);
     });
   });
@@ -133,7 +133,7 @@ JS.Test.describe("lexer-utils", function() {
       const PHRASE = concat('PHRASE', WORDS);
       const tokens = Lexer(PHRASE)('this is a phrase');
 
-      this.assertEqual([Token('PHRASE', 'this is a phrase', 0)], tokens);
+      this.assertEqual([Token('PHRASE', 'this is a phrase', 0, "this is a phrase")], tokens);
     });
   });
 
@@ -146,7 +146,7 @@ JS.Test.describe("lexer-utils", function() {
       const match = UNSUFFIXED_WORD([], CharacterStream('foo'));
       const notAMatch = UNSUFFIXED_WORD([], CharacterStream('foo1'));
 
-      this.assertEqual([Token('WORD', 'foo', 0)], match.tokens);
+      this.assertEqual([Token('WORD', 'foo', 0, "foo")], match.tokens);
       this.assertNull(notAMatch);
     });
   });
