@@ -20,6 +20,11 @@ var files = [
     extensions: ['.js'],
     destination: './dist'
   }, {
+    input: ['./src/global-option-parser.js'],
+    output: 'rmmv-mrp-core--option-parser.js',
+    extensions: ['.js'],
+    destination: './dist'
+  }, {
     input: ['./src/global-osx-fixes.js'],
     output: 'rmmv-mrp-core--osx-fixes.js',
     extensions: ['.js'],

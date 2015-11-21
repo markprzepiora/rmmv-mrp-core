@@ -32,7 +32,7 @@
  * plugin, as that file includes this and all the other core modules.
  *
  * Please look on GitHub for complete instructions:
- * https://github.com/markprzepiora/rmmv-mrp-core
+ * https://github.com/markprzepiora/rmmv-mrp-core/blob/master/docs/MapExporter.md
  */
 //=============================================================================
 
