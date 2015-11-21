@@ -210,6 +210,23 @@ JS.Test.describe("option-parser", function() {
       this.assertEqual({ type: 'CostsCurrency', args: [] }, secondOptions);
     });
 
+    this.it("extractAll works with tags that have blocks", function() {
+      var payload = `
+        <cat>Belldandy</cat>
+        <cat>Jester</cat>
+      `;
+
+      var optionsList = extractAll(payload);
+
+      this.assertKindOf(Array, optionsList, "should get a list back");
+      this.assertEqual(2, optionsList.length, "should get two option objects back");
+
+      var [firstOptions, secondOptions] = optionsList;
+
+      this.assertEqual({ type: 'cat', block: 'Belldandy', args: [] }, firstOptions);
+      this.assertEqual({ type: 'cat', block: 'Jester', args: [] }, secondOptions);
+    });
+
     this.it("extractAllOfType allows an exact matching type to be specified", function() {
       var optionsList = extractAllOfType(payload, 'Currency');
 
@@ -305,6 +322,33 @@ text" inside.`, opts.block);
 
       this.assertNotNull(opts);
       this.assertEqual(`foo <b>bar</b> baz`, opts.block);
+    });
+
+    this.it("strips the first and last linebreak if present", function() {
+      const opts = parse(`
+<cat>
+Belldandy is the best kitty.
+</cat>
+      `);
+
+      this.assertNotNull(opts);
+      this.assertEqual(`Belldandy is the best kitty.`, opts.block);
+    });
+
+    this.it("does not strip more than one linebreak from the start and end", function() {
+      const opts = parse(`
+<cat>
+
+Belldandy
+
+is the best
+kitty.
+
+</cat>
+      `);
+
+      this.assertNotNull(opts);
+      this.assertEqual(`\nBelldandy\n\nis the best\nkitty.\n`, opts.block);
     });
   });
 });

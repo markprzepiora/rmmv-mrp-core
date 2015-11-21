@@ -276,17 +276,22 @@ function parseNamedObject(tokenStream) {
 
   // At this point, we have a valid object. But we might also have a block of
   // text to parse after it.
-  const endTagMatch = findSequence(function(stream) {
+  const endTagStream = findSequence(function(stream) {
     return streamAtSequence(['BRA', 'SLASH', 'IDENTIFIER', 'KET'], stream) &&
            stream.advance(2).get().token === type;
   }, ketStream.advance());
 
-  if (endTagMatch) {
-    return [{ ...object, type, block: endTagMatch[0] }, ketStream.advance(4)];
+  if (endTagStream) {
+    const fullString = ketStream.get().string;
+    const blockString = fullString.slice(ketStream.get().pos + 1, endTagStream.get().pos);
+
+    return [{ ...object, type, block: chompLinebreaks(blockString) }, endTagStream.advance(4)];
   } else {
     return [{ ...object, type }, ketStream.advance()];
   }
 }
+
+const chompLinebreaks = (str) => str.replace(/^\n/, '').replace(/\n$/, '');
 
 // true if the stream is pointing at the given sequence of token names
 function streamAtSequence(tokenNames, stream) {
@@ -301,25 +306,13 @@ function streamAtSequence(tokenNames, stream) {
 
 // Looks for a sequence of tokens somewhere ahead in the stream.
 //
-// If present, returns a tuple,
-//
-// - first element: the string leading up to matching stream.
-// - second element: the stream starting at the match.
+// If present, returns the stream starting at the match.
 //
 // Otherwise returns null.
 function findSequence(fn, stream) {
-  // Otherwise, if the stream is empty, can't do anything.
-  if (stream.empty) {
-    return null;
-  }
-
-  // Stream isn't empty, so we can get a token out of it.
-  const startPos = stream.get().pos;
-  const string = stream.get().string;
-
   while (stream.present) {
     if (fn(stream)) {
-      return [string.slice(startPos, stream.get().pos), stream];
+      return stream;
     }
 
     stream = stream.advance();
