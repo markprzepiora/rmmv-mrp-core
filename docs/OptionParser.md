@@ -90,10 +90,10 @@ Input:
 Output:
 
 ```js
-{ type: 'Cat', name: 'Przepiora', block: "This is the best kitty cat in the whole wide world."}
+{ type: 'Cat', args: [], name: 'Przepiora', block: "This is the best kitty cat in the whole wide world." }
 ```
 
-Although the block is returned as string, you could use this to create nested options, by parsing the block too.
+Although the block is returned as a string, you could use this to create nested options, by parsing the block too.
 
 Example:
 
@@ -135,8 +135,8 @@ Like above, but extracts only objects of the specified type.
 
 ### `MRP.OptionParser.extractFirst(str)`
 
-Like `extractAll`, but returns the first match or `null` if none exist.
+Like `extractAll`, but returns the first match or `null` if none exists.
 
 ### `MRP.OptionParser.extractFirstOfType(str, type)`
 
-Like `extractAllOfType`, but returns the first match or `null` if none exist.
+Like `extractAllOfType`, but returns the first match or `null` if none exists.
