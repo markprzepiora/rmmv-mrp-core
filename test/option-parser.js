@@ -349,5 +349,28 @@ kitty.
       this.assertNotNull(opts);
       this.assertEqual(`\nBelldandy\n\nis the best\nkitty.\n`, opts.block);
     });
+
+    this.it("works on an integration test", function() {
+      const payload = `
+        <QuestChain>
+          <Quest name: "Epic Quest">
+             <questReward i: "6,7,8">
+             This is my awesome quest of doom!
+          </Quest>
+        </QuestChain>
+      `;
+
+      const questChain = extractFirstOfType(payload, 'QuestChain');
+      this.assertEqual('QuestChain', questChain.type);
+
+      const quests = extractAllOfType(questChain.block, 'Quest');
+      this.assertEqual(1, quests.length);
+
+      const quest = quests[0];
+      this.assertEqual("Epic Quest", quest.name);
+
+      const questReward = extractFirstOfType(quest.block, "questReward");
+      this.assertEqual("6,7,8", questReward.i);
+    });
   });
 });
