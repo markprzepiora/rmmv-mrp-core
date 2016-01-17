@@ -48,12 +48,18 @@ eventizeSingletonMethod(BattleManager,  'startTurn',      'turn.start');
 eventizeSingletonMethod(SceneManager,   'run',            'game.start');
 eventizePrototypeMethod(Game_Player,    'executeMove',    'player.move');
 
-GameObserver.onMap = function onMap(mapName, callback) {
-  GameObserver.on('map.setup', function() {
-    if (Map.info().name === mapName) {
+GameObserver.onMap = function onMap(mapNameOrID, callback) {
+  function off() {
+    GameObserver.off(observer);
+  }
+
+  GameObserver.on('map.setup', function observer() {
+    if (Map.info().id === mapNameOrID || Map.info().name === mapNameOrID) {
       callback();
     }
   });
+
+  return off;
 };
 
 GameObserver.onRegion = function onRegion(regionID, callback) {
