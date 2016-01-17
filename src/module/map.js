@@ -1,7 +1,7 @@
 import findIndex from 'ramda/src/findIndex';
 
-export function findAllEvents() {
-  return $gameMap.events().map((e) => findEvent(e.eventId()));
+export function findEvents(fn = () => true) {
+  return $gameMap.events().map((e) => findEvent(e.eventId())).filter(fn);
 }
 
 export function findEvent(id) {

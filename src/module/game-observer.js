@@ -46,6 +46,7 @@ eventizePrototypeMethod(Game_Map,       'setup',          'map.setup');
 eventizeSingletonMethod(BattleManager,  'endTurn',        'turn.end');
 eventizeSingletonMethod(BattleManager,  'startTurn',      'turn.start');
 eventizeSingletonMethod(SceneManager,   'run',            'game.start');
+eventizePrototypeMethod(Game_Player,    'executeMove',    'player.move');
 
 GameObserver.onMap = function onMap(mapName, callback) {
   GameObserver.on('map.setup', function() {
@@ -53,6 +54,20 @@ GameObserver.onMap = function onMap(mapName, callback) {
       callback();
     }
   });
-}
+};
+
+GameObserver.onRegion = function onRegion(regionID, callback) {
+  function off() {
+    GameObserver.off(observer);
+  }
+
+  GameObserver.on('player.move', function observer() {
+    if ($gamePlayer.regionId() === regionID) {
+      callback();
+    }
+  });
+
+  return off;
+};
 
 export default GameObserver;

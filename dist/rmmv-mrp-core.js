@@ -748,6 +748,7 @@ eventizePrototypeMethod(Game_Map, 'setup', 'map.setup');
 eventizeSingletonMethod(BattleManager, 'endTurn', 'turn.end');
 eventizeSingletonMethod(BattleManager, 'startTurn', 'turn.start');
 eventizeSingletonMethod(SceneManager, 'run', 'game.start');
+eventizePrototypeMethod(Game_Player, 'executeMove', 'player.move');
 
 GameObserver.onMap = function onMap(mapName, callback) {
   GameObserver.on('map.setup', function () {
@@ -755,6 +756,20 @@ GameObserver.onMap = function onMap(mapName, callback) {
       callback();
     }
   });
+};
+
+GameObserver.onRegion = function onRegion(regionID, callback) {
+  function off() {
+    GameObserver.off(observer);
+  }
+
+  GameObserver.on('player.move', function observer() {
+    if ($gamePlayer.regionId() === regionID) {
+      callback();
+    }
+  });
+
+  return off;
 };
 
 exports.default = GameObserver;
@@ -1122,7 +1137,7 @@ function exportMapAsync() {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.findAllEvents = findAllEvents;
+exports.findEvents = findEvents;
 exports.findEvent = findEvent;
 exports.findEventByName = findEventByName;
 exports.event = event;
@@ -1134,10 +1149,14 @@ var _findIndex2 = _interopRequireDefault(_findIndex);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function findAllEvents() {
+function findEvents() {
+  var fn = arguments.length <= 0 || arguments[0] === undefined ? function () {
+    return true;
+  } : arguments[0];
+
   return $gameMap.events().map(function (e) {
     return findEvent(e.eventId());
-  });
+  }).filter(fn);
 }
 
 function findEvent(id) {
