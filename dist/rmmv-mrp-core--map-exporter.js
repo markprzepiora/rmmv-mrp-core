@@ -746,12 +746,18 @@ eventizeSingletonMethod(BattleManager, 'startTurn', 'turn.start');
 eventizeSingletonMethod(SceneManager, 'run', 'game.start');
 eventizePrototypeMethod(Game_Player, 'executeMove', 'player.move');
 
-GameObserver.onMap = function onMap(mapName, callback) {
-  GameObserver.on('map.setup', function () {
-    if (Map.info().name === mapName) {
+GameObserver.onMap = function onMap(mapNameOrID, callback) {
+  function off() {
+    GameObserver.off(observer);
+  }
+
+  GameObserver.on('map.setup', function observer() {
+    if (Map.info().id === mapNameOrID || Map.info().name === mapNameOrID) {
       callback();
     }
   });
+
+  return off;
 };
 
 GameObserver.onRegion = function onRegion(regionID, callback) {
@@ -1056,9 +1062,7 @@ function exportMapAsync() {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.findEvents = findEvents;
-exports.findEvent = findEvent;
-exports.findEventByName = findEventByName;
+exports.events = events;
 exports.event = event;
 exports.info = info;
 
@@ -1068,17 +1072,29 @@ var _findIndex2 = _interopRequireDefault(_findIndex);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function findEvents() {
+function events() {
   var fn = arguments.length <= 0 || arguments[0] === undefined ? function () {
     return true;
   } : arguments[0];
 
   return $gameMap.events().map(function (e) {
-    return findEvent(e.eventId());
+    return Event(e.eventId());
   }).filter(fn);
 }
 
-function findEvent(id) {
+function event(idOrName) {
+  if (typeof idOrName === 'number') {
+    return Event(idOrName);
+  } else {
+    return findEventByName(idOrName);
+  }
+}
+
+function info() {
+  return $dataMapInfos[$gameMap.mapId()];
+}
+
+function Event(id) {
   var definition = $dataMap.events[id];
   var instance = $gameMap._events[id];
 
@@ -1102,19 +1118,7 @@ function findEventByName(name) {
     throw 'could not find event with name ' + name;
   }
 
-  return findEvent(id);
-}
-
-function event(idOrName) {
-  if (typeof idOrName === 'number') {
-    return findEvent(idOrName);
-  } else {
-    return findEventByName(idOrName);
-  }
-}
-
-function info() {
-  return $dataMapInfos[$gameMap.mapId()];
+  return Event(id);
 }
 
 },{"ramda/src/findIndex":16}]},{},[26]);
