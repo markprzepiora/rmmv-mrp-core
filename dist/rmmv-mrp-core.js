@@ -592,7 +592,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 MRP.OSXFixes.InstallAllFixes(); //=============================================================================
 // RPG Maker MV MRP Core Module
 // rmmv-mrp-core.js
-// Version: 0.0.14
+// Version: 0.0.15
 //=============================================================================
 
 //=============================================================================
