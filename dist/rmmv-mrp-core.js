@@ -611,9 +611,46 @@ MRP.OSXFixes.InstallAllFixes(); //==============================================
  */
 //=============================================================================
 
+MRP.ChangeTextSpeed.install();
+
 window.MRP = MRP;
 
-},{"./module/index":32}],27:[function(require,module,exports){
+},{"./module/index":33}],27:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.install = install;
+function install() {
+  var _processCharacter = Window_Base.prototype.processCharacter;
+  Window_Base.prototype.processCharacter = function (textState) {
+    if (typeof textState.slowdown === 'undefined') {
+      return _processCharacter.apply(this, arguments);
+    }
+
+    if (typeof textState.slowdownCounter === 'undefined') {
+      textState.slowdownCounter = 0;
+    }
+
+    if (textState.slowdownCounter++ >= textState.slowdown) {
+      textState.slowdownCounter = 0;
+      return _processCharacter.apply(this, arguments);
+    }
+  };
+
+  var _processEscapeCharacter = Window_Message.prototype.processEscapeCharacter;
+  Window_Message.prototype.processEscapeCharacter = function (code, textState) {
+    if (code === 'S') {
+      var slowdown = Number(this.obtainEscapeParam(textState));
+      textState.slowdown = slowdown ? slowdown : null;
+    } else {
+      _processEscapeCharacter.apply(this, arguments);
+    }
+  };
+}
+
+},{}],28:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -624,7 +661,7 @@ function run(id) {
   $gameTemp.reserveCommonEvent(id);
 }
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -635,7 +672,7 @@ function findItem(id) {
   return $dataItems[id];
 }
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -679,7 +716,7 @@ function homeDir() {
   return window.process.env.HOME || window.process.env.USERPROFILE;
 }
 
-},{"nw.gui":undefined,"os":undefined,"path":undefined}],30:[function(require,module,exports){
+},{"nw.gui":undefined,"os":undefined,"path":undefined}],31:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -780,7 +817,7 @@ GameObserver.onRegion = function onRegion(regionID, callback) {
 
 exports.default = GameObserver;
 
-},{"./map":35,"event-emitter":1}],31:[function(require,module,exports){
+},{"./map":36,"event-emitter":1}],32:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -844,13 +881,13 @@ _gameObserver2.default.on('map.setup', function () {
 
 exports.default = geometry;
 
-},{"./game-observer":30}],32:[function(require,module,exports){
+},{"./game-observer":31}],33:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Map = exports.Database = exports.Inventory = exports.CommonEvents = exports.Geometry = exports.OptionParser = exports.GameObserver = undefined;
+exports.ChangeTextSpeed = exports.Map = exports.Database = exports.Inventory = exports.CommonEvents = exports.Geometry = exports.OptionParser = exports.GameObserver = undefined;
 
 var _gameObserver = require('./game-observer');
 
@@ -880,6 +917,10 @@ var _map = require('./map');
 
 var Map = _interopRequireWildcard(_map);
 
+var _changeTextSpeed = require('./change-text-speed');
+
+var ChangeTextSpeed = _interopRequireWildcard(_changeTextSpeed);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -891,8 +932,9 @@ exports.CommonEvents = CommonEvents;
 exports.Inventory = Inventory;
 exports.Database = Database;
 exports.Map = Map;
+exports.ChangeTextSpeed = ChangeTextSpeed;
 
-if (Utils.isNwjs()) {
+if (Utils && Utils.isNwjs && Utils.isNwjs()) {
   var MapExporter = require('./map-exporter').default;
   var OSXFixes = require('./osx-fixes');
 
@@ -900,7 +942,7 @@ if (Utils.isNwjs()) {
   module.exports.MapExporter = MapExporter;
 }
 
-},{"./common-events":27,"./database":28,"./game-observer":30,"./geometry":31,"./inventory":33,"./map":35,"./map-exporter":34,"./option-parser":36,"./osx-fixes":38}],33:[function(require,module,exports){
+},{"./change-text-speed":27,"./common-events":28,"./database":29,"./game-observer":31,"./geometry":32,"./inventory":34,"./map":36,"./map-exporter":35,"./option-parser":37,"./osx-fixes":39}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -921,7 +963,7 @@ function clearItem(id) {
   addItem(id, -99999);
 }
 
-},{"./database":28}],34:[function(require,module,exports){
+},{"./database":29}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1137,7 +1179,7 @@ function exportMapAsync() {
   });
 }
 
-},{"./directories":29,"./geometry":31,"fs":undefined,"nw.gui":undefined,"path":undefined}],35:[function(require,module,exports){
+},{"./directories":30,"./geometry":32,"fs":undefined,"nw.gui":undefined,"path":undefined}],36:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1202,7 +1244,7 @@ function findEventByName(name) {
   return Event(id);
 }
 
-},{"ramda/src/findIndex":16}],36:[function(require,module,exports){
+},{"ramda/src/findIndex":16}],37:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1613,7 +1655,7 @@ function extractAllOfType(str, type) {
   });
 }
 
-},{"./lexer-utils":37}],37:[function(require,module,exports){
+},{"./lexer-utils":38}],38:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1948,7 +1990,7 @@ function Lexer(_lexer) {
   };
 }
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2021,4 +2063,4 @@ function InstallAllFixes() {
   }
 }
 
-},{"./game-observer":30,"nw.gui":undefined,"os":undefined}]},{},[26]);
+},{"./game-observer":31,"nw.gui":undefined,"os":undefined}]},{},[26]);

@@ -1,13 +1,12 @@
 //=============================================================================
-// RPG Maker MV MRP Core Module
-// rmmv-mrp-core.js
+// RPG Maker MV MRP Change Text Speed
+// rmmv-mrp-core--change-text-speed.js
 // Version: 0.0.14
 //=============================================================================
 
 //=============================================================================
 /*:
- * @plugindesc A collection of utilities for RPG Maker MV game designers and
- * plugin writers.
+ * @plugindesc Change message text speed on a per-message basis.
  * @author Mark Przepiora
  *
  * @help
@@ -16,13 +15,10 @@
  * ============================================================================
  *
  * Please look on GitHub for complete instructions:
- * https://github.com/markprzepiora/rmmv-mrp-core
+ * https://github.com/markprzepiora/rmmv-mrp-core/blob/master/docs/ChangeTextSpeed.md
  */
 //=============================================================================
 
-import * as MRP from './module/index';
+import ChangeTextSpeed from './module/change-text-speed';
 
-MRP.OSXFixes.InstallAllFixes();
-MRP.ChangeTextSpeed.install();
-
-window.MRP = MRP;
+ChangeTextSpeed.install();
