@@ -54,3 +54,7 @@ console.log(extractFirst(`
 ## `MRP.Geometry`
 
 [Click here to read.](docs/Geometry.md)
+
+## `MRP.Map`
+
+[Click here to read.](docs/Map.md)

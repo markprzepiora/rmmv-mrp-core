@@ -1,10 +1,22 @@
 import findIndex from 'ramda/src/findIndex';
 
-export function findEvents(fn = () => true) {
-  return $gameMap.events().map((e) => findEvent(e.eventId())).filter(fn);
+export function events(fn = () => true) {
+  return $gameMap.events().map((e) => Event(e.eventId())).filter(fn);
 }
 
-export function findEvent(id) {
+export function event(idOrName) {
+  if (typeof idOrName === 'number') {
+    return Event(idOrName);
+  } else {
+    return findEventByName(idOrName);
+  }
+}
+
+export function info() {
+  return $dataMapInfos[$gameMap.mapId()];
+}
+
+function Event(id) {
   const definition = $dataMap.events[id];
   const instance   = $gameMap._events[id];
 
@@ -19,7 +31,7 @@ export function findEvent(id) {
   return { definition, instance, id };
 }
 
-export function findEventByName(name) {
+function findEventByName(name) {
   const id = findIndex(
     (e) => e && (e.name === name),
     $dataMap.events
@@ -29,17 +41,6 @@ export function findEventByName(name) {
     throw `could not find event with name ${name}`;
   }
 
-  return findEvent(id);
+  return Event(id);
 }
 
-export function event(idOrName) {
-  if (typeof idOrName === 'number') {
-    return findEvent(idOrName);
-  } else {
-    return findEventByName(idOrName);
-  }
-}
-
-export function info() {
-  return $dataMapInfos[$gameMap.mapId()];
-}
