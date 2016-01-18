@@ -30,6 +30,11 @@ var files = [
     extensions: ['.js'],
     destination: './dist'
   }, {
+    input: ['./src/global-map.js'],
+    output: 'rmmv-mrp-core--map.js',
+    extensions: ['.js'],
+    destination: './dist'
+  }, {
     input: ['./test/index.js'],
     output: 'test.js',
     extensions: ['.js'],
