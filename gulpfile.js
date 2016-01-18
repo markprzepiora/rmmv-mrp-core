@@ -35,6 +35,11 @@ var files = [
     extensions: ['.js'],
     destination: './dist'
   }, {
+    input: ['./src/global-change-text-speed.js'],
+    output: 'rmmv-mrp-core--change-text-speed.js',
+    extensions: ['.js'],
+    destination: './dist'
+  }, {
     input: ['./test/index.js'],
     output: 'test.js',
     extensions: ['.js'],

@@ -257,7 +257,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 if (!window.MRP) {
   window.MRP = {};
 } //=============================================================================
-// RPG Maker MV MRP Map Exporter
+// RPG Maker MV MRP Map Utils
 // rmmv-mrp-core--map.js
 // Version: 0.0.14
 //=============================================================================
