@@ -58,3 +58,7 @@ console.log(extractFirst(`
 ## `MRP.Map`
 
 [Click here to read.](docs/Map.md)
+
+## `MRP.ChangeTextSpeed`
+
+[Click here to read.](docs/ChangeTextSpeed.md)
