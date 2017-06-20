@@ -15,6 +15,7 @@ MRP.GameObserver.on('turn.start', function() {
 Implemented events:
 
 - `turn.start`, `turn.end`
+- `battleAction.start`, `battleAction.end`
 - `battle.start`, `battle.end`
 - `game.start` is triggered when the game first launches to the title screen.
 - `map.setup` is triggered when a map loads or changes.

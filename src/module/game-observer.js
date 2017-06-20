@@ -45,6 +45,8 @@ eventizePrototypeMethod(Game_Troop,     'onBattleEnd',    'battle.end');
 eventizePrototypeMethod(Game_Map,       'setup',          'map.setup');
 eventizeSingletonMethod(BattleManager,  'endTurn',        'turn.end');
 eventizeSingletonMethod(BattleManager,  'startTurn',      'turn.start');
+eventizeSingletonMethod(BattleManager,  'startAction',    'battleAction.start');
+eventizeSingletonMethod(BattleManager,  'endAction',      'battleAction.end');
 eventizeSingletonMethod(SceneManager,   'run',            'game.start');
 eventizePrototypeMethod(Game_Player,    'executeMove',    'player.move');
 
