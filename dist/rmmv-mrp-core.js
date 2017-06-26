@@ -589,10 +589,12 @@ var MRP = _interopRequireWildcard(_index);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-MRP.OSXFixes.InstallAllFixes(); //=============================================================================
+if (MRP.OSXFixes) {
+  MRP.OSXFixes.InstallAllFixes();
+} //=============================================================================
 // RPG Maker MV MRP Core Module
 // rmmv-mrp-core.js
-// Version: 0.0.16
+// Version: 0.0.17
 //=============================================================================
 
 //=============================================================================

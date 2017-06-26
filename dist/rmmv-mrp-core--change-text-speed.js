@@ -10,7 +10,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 _changeTextSpeed2.default.install(); //=============================================================================
 // RPG Maker MV MRP Change Text Speed
 // rmmv-mrp-core--change-text-speed.js
-// Version: 0.0.16
+// Version: 0.0.17
 //=============================================================================
 
 //=============================================================================

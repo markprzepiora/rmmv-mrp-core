@@ -1,7 +1,7 @@
 //=============================================================================
 // RPG Maker MV MRP Core Module
 // rmmv-mrp-core.js
-// Version: 0.0.16
+// Version: 0.0.17
 //=============================================================================
 
 //=============================================================================
@@ -22,7 +22,9 @@
 
 import * as MRP from './module/index';
 
-MRP.OSXFixes.InstallAllFixes();
+if (MRP.OSXFixes) {
+  MRP.OSXFixes.InstallAllFixes();
+}
 MRP.ChangeTextSpeed.install();
 
 window.MRP = MRP;
