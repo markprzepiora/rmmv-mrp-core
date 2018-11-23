@@ -6,6 +6,7 @@ import * as Inventory from './inventory';
 import * as Database from './database';
 import * as Map from './map';
 import * as ChangeTextSpeed from './change-text-speed';
+import * as PluginCommands from './plugin-commands';
 
 export {
   GameObserver,
@@ -15,7 +16,8 @@ export {
   Inventory,
   Database,
   Map,
-  ChangeTextSpeed
+  ChangeTextSpeed,
+  PluginCommands,
 };
 
 if (Utils && Utils.isNwjs && Utils.isNwjs()) {

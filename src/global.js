@@ -26,5 +26,6 @@ if (MRP.OSXFixes) {
   MRP.OSXFixes.InstallAllFixes();
 }
 MRP.ChangeTextSpeed.install();
+MRP.PluginCommands.install();
 
 window.MRP = MRP;
