@@ -1,6 +1,6 @@
-import gui from 'nw.gui';
-import path from 'path';
-import os from 'os';
+const gui = window.require('nw.gui');
+const path = window.require('path');
+const os = window.require('os');
 
 export function gameDir() {
   const args     = gui.App.fullArgv;

@@ -2,9 +2,10 @@ if (!Utils.isNwjs()) {
   throw "rmmv-mrp-core/osx-fixes can only be run during development";
 }
 
-import gui from 'nw.gui';
-import os from 'os';
 import GameObserver from './game-observer';
+
+const gui = window.require('nw.gui');
+const os = window.require('os');
 
 // Are we inside nw.js, and are we running OSX?
 const isOSX = os && (os.platform() === "darwin");
@@ -44,7 +45,7 @@ export function MoveDevToolsWindow() {
   }
 }
 
-export function InstallAllFixes() {
+export function install() {
   if (isOSX) {
     FixOSXCopyPaste();
     MoveDevToolsWindow();

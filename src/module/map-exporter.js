@@ -2,11 +2,12 @@ if (!Utils.isNwjs()) {
   throw "rmmv-mrp-core/map-exporter can only be run during development";
 }
 
-import gui from 'nw.gui';
 import geometry from './geometry';
-import fs from 'fs';
-import path from 'path';
 import { gameDir, homeDir } from './directories';
+
+const gui = window.require('nw.gui');
+const fs = window.require('fs');
+const path = window.require('path');
 
 function screenshotName(basename, suffix) {
   if (!basename) {

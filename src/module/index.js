@@ -19,11 +19,3 @@ export {
   ChangeTextSpeed,
   PluginCommands,
 };
-
-if (Utils && Utils.isNwjs && Utils.isNwjs()) {
-  const MapExporter = require('./map-exporter').default;
-  const OSXFixes    = require('./osx-fixes');
-
-  module.exports.OSXFixes = OSXFixes;
-  module.exports.MapExporter = MapExporter;
-}
