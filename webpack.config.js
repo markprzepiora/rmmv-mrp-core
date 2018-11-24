@@ -12,6 +12,7 @@ module.exports = {
     'rmmv-mrp-core': './src/rmmv-mrp-core.js',
     'rmmv-mrp-core--osx-fixes': './src/rmmv-mrp-core--osx-fixes.js',
     'rmmv-mrp-core--map-exporter': './src/rmmv-mrp-core--map-exporter.js',
+    'test': './test/index.js',
   },
   output: {
     filename: '[name].js',
