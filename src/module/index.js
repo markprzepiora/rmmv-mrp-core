@@ -1,3 +1,4 @@
+import Override from './override';
 import GameObserver from './game-observer';
 import * as OptionParser from './option-parser';
 import Geometry from './geometry';
@@ -9,6 +10,7 @@ import * as ChangeTextSpeed from './change-text-speed';
 import * as PluginCommands from './plugin-commands';
 
 export {
+  Override,
   GameObserver,
   OptionParser,
   Geometry,
