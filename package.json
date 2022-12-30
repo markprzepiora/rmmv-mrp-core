@@ -14,8 +14,8 @@
   "devDependencies": {
     "banner-webpack-plugin": "^0.2.3",
     "jstest": "^1.0.5",
-    "webpack": "^4.26.0",
-    "webpack-cli": "^3.1.2"
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1"
   },
   "author": "Mark Przepiora <mark.przepiora@gmail.com>",
   "license": "CC BY-NC 4.0",
